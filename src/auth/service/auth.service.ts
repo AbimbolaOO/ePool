@@ -4,7 +4,6 @@ import { IJwtPayLoadData } from 'src/interface';
 import jwtConfig from 'src/utils/config/jwt.config';
 import { compareHash, createHash } from 'src/utils/utils';
 import { QueryFailedError, Repository } from 'typeorm';
-import { DataSource } from 'typeorm/browser';
 
 import {
     BadRequestException,
@@ -19,7 +18,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { InAppPasswordResetDto } from '../dto/Inapp-password-reset-dto';
 import { PasswordResetDto } from '../dto/password-reset.dto';
 import { ResendUserSignUpOtpDto } from '../dto/resend-user-signup-otp.dto';
 import { SignInUserDto } from '../dto/signin-user.dto';
@@ -121,6 +119,10 @@ export class AuthService {
             throw new ForbiddenException(ERROR_MESSAGES.ACCOUNT_IS_NOT_VERIFIED);
         }
 
+        if (!user.password) {
+            throw new UnprocessableEntityException(ERROR_MESSAGES.NO_PASSWORD);
+        }
+
         const isValidPassword = await compareHash(signinData.password, user.password);
 
         if (!isValidPassword) {
@@ -204,21 +206,6 @@ export class AuthService {
 
         await this.userService.update({ password: newPassword }, data.email);
 
-        return true;
-    }
-
-    async inAppPasswordReset(data: InAppPasswordResetDto, id: string) {
-        const user = await this.userService.getById(id);
-
-        const isOldPassword = await compareHash(data.password, user.password);
-
-        if (isOldPassword) {
-            throw new ForbiddenException(ERROR_MESSAGES.PLEASE_USE_NEW_PASSWORD);
-        }
-
-        const password = await createHash(data.password);
-
-        await this.userService.update({ password }, undefined, id);
         return true;
     }
 
