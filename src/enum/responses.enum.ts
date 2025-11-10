@@ -19,4 +19,3 @@ export enum ERROR_MESSAGES {
   PLEASE_USE_NEW_PASSWORD = 'Please use a new password',
   NO_PASSWORD = 'No password set for this account',
 }
-

@@ -10,57 +10,50 @@ import { User } from '../entity/user.entity';
 
 @Injectable()
 export class UserService {
-    constructor(
-        @InjectRepository(User) private repo: Repository<User>,
-    ) {}
+  constructor(@InjectRepository(User) private repo: Repository<User>) {}
 
-    async create(createUserData) {
-        const newUser = await this.repo.create({
-            ...createUserData,
-            identityVerification: {},
-        });
-        return this.repo.save(newUser);
+  async create(createUserData) {
+    const newUser = await this.repo.create({
+      ...createUserData,
+      identityVerification: {},
+    });
+    return this.repo.save(newUser);
+  }
+
+  async update(attr: Partial<User>, email?: string, id?: string) {
+    let user;
+    if (email) {
+      user = await this.getByEmail(email);
     }
 
-    async update(
-        attr: Partial<User>,
-        email?: string,
-        id?: string,
-    ) {
-        let user;
-        if (email) {
-            user = await this.getByEmail(email);
-        }
-
-        if (id) {
-            user = await this.getById(id);
-        }
-
-        if (!user) {
-            throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
-        }
-
-        Object.assign(user, attr);
-        return this.repo.save(user);
+    if (id) {
+      user = await this.getById(id);
     }
 
-    async getById(id: string) {
-        const user = await this.repo.findOne({ where: { id } });
-
-        if (!user) {
-            throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
-        }
-        return user;
+    if (!user) {
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
+    Object.assign(user, attr);
+    return this.repo.save(user);
+  }
 
-    async getByEmail(email: string) {
-        const user = await this.repo.findOne({ where: { email } });
+  async getById(id: string) {
+    const user = await this.repo.findOne({ where: { id } });
 
-        if (!user) {
-            throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
-        }
-
-        return user;
+    if (!user) {
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
     }
+    return user;
+  }
+
+  async getByEmail(email: string) {
+    const user = await this.repo.findOne({ where: { email } });
+
+    if (!user) {
+      throw new NotFoundException(ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+
+    return user;
+  }
 }

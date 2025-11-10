@@ -1,5 +1,3 @@
-
-
 export interface IJwtPayLoadData {
   email: string;
   firstName: string;

@@ -10,7 +10,9 @@ import { PoolModule } from './pool/pool.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: `.env` }),
-    AuthModule, PoolModule, NotificationModule
+    AuthModule,
+    PoolModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

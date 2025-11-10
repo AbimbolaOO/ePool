@@ -29,10 +29,10 @@ export class User {
   @Column()
   middleName: string;
 
-  @Column({ default: null })
+  @Column()
   gender: string;
 
-  @Column({ default: null })
+  @Column()
   password: string;
 
   @Column({ default: false })

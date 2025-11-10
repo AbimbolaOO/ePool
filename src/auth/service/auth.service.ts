@@ -5,7 +5,6 @@ import jwtConfig from 'src/utils/config/jwt.config';
 import { compareHash, createHash } from 'src/utils/utils';
 import { QueryFailedError, Repository } from 'typeorm';
 import { DataSource } from 'typeorm/browser';
-import { UUID } from 'typeorm/browser/driver/mongodb/bson.typings.js';
 
 import {
     BadRequestException,
@@ -17,20 +16,24 @@ import {
     UnauthorizedException,
     UnprocessableEntityException,
 } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { InAppPasswordResetDto } from '../dto/Inapp-password-reset-dto';
+import { PasswordResetDto } from '../dto/password-reset.dto';
+import { ResendUserSignUpOtpDto } from '../dto/resend-user-signup-otp.dto';
+import { SignInUserDto } from '../dto/signin-user.dto';
+import { VerifyUserSignupDto } from '../dto/verify-user-signup.dto';
 import { User } from '../entity/user.entity';
 import { RdbService } from '../redisdb/rdb.service';
 import { UserService } from './user.service';
 
+import type { ConfigType } from '@nestjs/config';
 @Injectable()
 export class AuthService {
     constructor(
         @InjectRepository(User) private repo: Repository<User>,
         private userService: UserService,
-        private readonly dataSource: DataSource,
         @Inject(jwtConfig.KEY)
         private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
         private readonly rdbService: RdbService,
@@ -61,18 +64,14 @@ export class AuthService {
         }
     }
 
-
-    async verifySignup(verificationData: Partial<User>) {
+    async verifySignup(verificationData: VerifyUserSignupDto) {
         const email = verificationData.email;
         const signupData = { isVerified: true };
         if (email) {
             signupData['emailVerifiedAt'] = new Date();
         }
 
-        const verifiedUser = await this.userService.update(
-            signupData,
-            email
-        );
+        const verifiedUser = await this.userService.update(signupData, email);
 
         const { accessToken, refreshToken } = await this.generateTokens(
             verifiedUser as User,
@@ -90,10 +89,10 @@ export class AuthService {
         return signInResData;
     }
 
-    async resendVerificationOtp(resendVerificationData: Partial<User>) {
+    async resendVerificationOtp(resendVerificationData: ResendUserSignUpOtpDto) {
         const email = resendVerificationData.email;
 
-        let user: Partial<User> = null;
+        let user: Partial<User> | null = null;
 
         if (email) {
             user = await this.userService.getByEmail(email);
@@ -106,8 +105,8 @@ export class AuthService {
         }
     }
 
-    async signIn(signinData: Partial<User>) {
-        let user: Partial<User>;
+    async signIn(signinData: SignInUserDto) {
+        let user: Partial<User> | null = null;
         if (signinData.email) {
             user = await this.userService.getByEmail(signinData.email);
         }
@@ -118,18 +117,22 @@ export class AuthService {
             );
         }
 
+        if (!user.isVerified) {
+            throw new ForbiddenException(ERROR_MESSAGES.ACCOUNT_IS_NOT_VERIFIED);
+        }
+
         const isValidPassword = await compareHash(signinData.password, user.password);
 
-        const { accessToken, refreshToken } = await this.generateTokens(
-            user as User,
-        );
+        if (!isValidPassword) {
+            throw new UnprocessableEntityException(ERROR_MESSAGES.INVALID_CREDENTIALS);
+        }
+
+        const { accessToken, refreshToken } = await this.generateTokens(user as User);
 
         const signInResData = {
             ...user,
             authCredentials: {
-                accessToken,
-                refreshToken,
-                accessTokenTtl: this.jwtConfiguration.accessTokenTtl,
+                accessToken, refreshToken, accessTokenTtl: this.jwtConfiguration.accessTokenTtl,
             },
         };
 
@@ -147,7 +150,9 @@ export class AuthService {
             });
 
             const userData = await this.userService.getById(sub);
-            const cachedRefreshTokenId = await this.rdbService.getRefreshTokenId(userData.id);
+            const cachedRefreshTokenId = await this.rdbService.getRefreshTokenId(
+                userData.id,
+            );
 
             // JWT Access reuse detection
             if (refreshTokenId !== cachedRefreshTokenId) {
@@ -164,7 +169,7 @@ export class AuthService {
     }
 
     async validatePasswordResetUser(passwordResetData: Partial<User>) {
-        let user: Partial<User>;
+        let user: Partial<User> | null = null;
         if (passwordResetData.email) {
             user = await this.userService.getByEmail(passwordResetData.email);
         }
@@ -173,12 +178,20 @@ export class AuthService {
         }
     }
 
-    async resetPassword(data: Partial<User>) {
+    async resetPassword(data: PasswordResetDto) {
+        if (!data.password) {
+            throw new BadRequestException('Password is required');
+        }
+
         const newPassword = await createHash(data.password);
-        let user;
+        let user: Partial<User> | null = null;
 
         if (data.email) {
             user = await this.userService.getByEmail(data.email);
+        }
+
+        if (!user) {
+            throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
         }
 
         if (user.password) {
@@ -189,7 +202,7 @@ export class AuthService {
             }
         }
 
-        data.password = newPassword;
+        await this.userService.update({ password: newPassword }, data.email);
 
         return true;
     }
@@ -255,7 +268,7 @@ export class AuthService {
         );
     }
 
-    async validateUserPassword(id: UUID, password: string) {
+    async validateUserPassword(id: string, password: string) {
         const user = await this.userService.getById(id);
         if (!user.isVerified) {
             throw new ForbiddenException(ERROR_MESSAGES.ACCOUNT_IS_NOT_VERIFIED);

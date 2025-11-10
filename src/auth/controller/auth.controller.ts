@@ -1,4 +1,3 @@
-import { CONSTANTS } from 'src/enum/constants.enum';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from 'src/enum/responses.enum';
 import { generateOTP } from 'src/utils/utils';
 
@@ -41,7 +40,6 @@ export class AuthController {
         await this.authService.signUp(body);
         const otp: string = generateOTP();
 
-
         await this.rdbService.storeSignUpOtp(`${body.email}`, otp);
         // this.notificationClient.emit(CONSTANTS.EMAIL_OTP, { email: body.email, otp });
 
@@ -58,15 +56,15 @@ export class AuthController {
     @Post('signup/verify-otp')
     @HttpCode(HttpStatus.OK)
     async verifySignup(@Body() body: VerifyUserSignupDto) {
-        const cachedData = await this.rdbService.getSignUpOtp(
-            `${body.email}`,
-        );
+        const cachedData = await this.rdbService.getSignUpOtp(`${body.email}`);
 
         if (cachedData === null || cachedData !== body.otp) {
             throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
         }
 
         const resData = await this.authService.verifySignup(body);
+
+        await this.rdbService.deleteSignUpOtp(`${body.email}`);
 
         if (resData.email) {
             // this.notificationClient.emit(CONSTANTS.USER_WELCOME_EMAIL_NOTIFICATION, { email: body.email });
@@ -83,9 +81,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async ResendVerificationOtp(@Body() body: ResendUserSignUpOtpDto) {
         if (!body.email) {
-            throw new BadRequestException(
-                ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED,
-            );
+            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
         }
 
         await this.authService.resendVerificationOtp(body);
@@ -110,9 +106,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async signIn(@Body() body: SignInUserDto) {
         if (!body.email) {
-            throw new BadRequestException(
-                ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED,
-            );
+            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
         }
 
         const resData = await this.authService.signIn(body);
@@ -140,9 +134,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async genPasswordResetOtp(@Body() body: genPasswdResetOtpDto) {
         if (!body.email) {
-            throw new BadRequestException(
-                ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED,
-            );
+            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
         }
 
         await this.authService.validatePasswordResetUser(body);
@@ -154,7 +146,7 @@ export class AuthController {
         }
 
         return {
-            statusCode: 200,
+            statusCode: HttpStatus.OK,
             message: `Reset OTP sent, check ${body.email ? 'mail' : 'phone'}`,
             data: {
                 otp: this.configService.get<string>('DEV_MODE') === 'true' ? otp : null,
@@ -166,17 +158,13 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async validatePasswordResetOtp(@Body() body: VerifyPasswordResetOtpDto) {
         if (!body.email) {
-            throw new BadRequestException(
-                ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED,
-            );
+            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
         }
 
         const otp = await this.rdbService.getPasswordResetOtp(body.email);
 
         if (otp !== body.otp) {
-            throw new UnauthorizedException(
-                ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED,
-            );
+            throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
         }
 
         return {
@@ -190,9 +178,7 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async PasswordReset(@Body() body: PasswordResetDto) {
         if (!body.email) {
-            throw new BadRequestException(
-                ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED,
-            );
+            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
         }
 
         const cachedData = await this.rdbService.getPasswordResetOtp(body.email);
@@ -201,6 +187,10 @@ export class AuthController {
         }
 
         await this.authService.resetPassword(body);
+
+        // Clean up the OTP after successful password reset
+        await this.rdbService.deletePasswordResetOtp(body.email);
+
         return {
             statusCode: HttpStatus.OK,
             message: SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESSFULLY,
