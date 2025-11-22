@@ -1,0 +1,22 @@
+services:
+  postgres:
+    container_name: ePool
+    image: postgres
+    environment:
+      POSTGRES_USER: ePool
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5492:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres:

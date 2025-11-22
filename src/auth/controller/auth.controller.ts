@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import { MailService } from '../../notification/service/mail.service';
 import { genPasswdResetOtpDto } from '../dto/gen-passwd-reset-otp.dto';
 import { PasswordResetDto } from '../dto/password-reset.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
@@ -23,15 +24,14 @@ import { VerifyPasswordResetOtpDto } from '../dto/verify-password-reset-otp.dto'
 import { VerifyUserSignupDto } from '../dto/verify-user-signup.dto';
 import { RdbService } from '../redisdb/rdb.service';
 import { AuthService } from '../service/auth.service';
-import { UserService } from '../service/user.service';
 
 @Controller('auth')
 export class AuthController {
     constructor(
         private readonly rdbService: RdbService,
-        private readonly userService: UserService,
         private readonly authService: AuthService,
         private readonly configService: ConfigService,
+        private readonly mailService: MailService,
     ) {}
 
     @Post('signup')
@@ -67,7 +67,7 @@ export class AuthController {
         await this.rdbService.deleteSignUpOtp(`${body.email}`);
 
         if (resData.email) {
-            // this.notificationClient.emit(CONSTANTS.USER_WELCOME_EMAIL_NOTIFICATION, { email: body.email });
+            this.mailService.userSignupWelcomeMailFormat({ email: body.email });
         }
 
         return {
@@ -89,7 +89,7 @@ export class AuthController {
 
         if (body.email) {
             await this.rdbService.storeSignUpOtp(`${body.email}`, otp);
-            // this.notificationClient.emit(CONSTANTS.EMAIL_OTP, { email: body.email, otp });
+            this.mailService.setEmailOtpMailFormat({ email: body.email, otp });
         }
 
         return {
@@ -142,7 +142,7 @@ export class AuthController {
 
         if (body.email) {
             await this.rdbService.storePasswordResetOtp(body.email, otp);
-            // this.notificationClient.emit(CONSTANTS.EMAIL_PASSWD_RESET_OTP, { email: body.email, otp });
+            this.mailService.setEmailOtpMailFormat({ email: body.email, otp });
         }
 
         return {
@@ -187,8 +187,6 @@ export class AuthController {
         }
 
         await this.authService.resetPassword(body);
-
-        // Clean up the OTP after successful password reset
         await this.rdbService.deletePasswordResetOtp(body.email);
 
         return {
