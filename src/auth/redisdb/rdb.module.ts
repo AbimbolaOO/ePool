@@ -1,23 +1,30 @@
 import jwtConfig from 'src/utils/config/jwt.config';
 
-import { CacheModule } from '@nestjs/cache-manager';
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { RdbService } from './rdb.service';
 
-const redisStore = require('cache-manager-redis-store').redisStore;
 @Module({
   imports: [
     ConfigModule.forFeature(jwtConfig),
-    CacheModule.registerAsync({
+
+    BullModule.registerQueueAsync({
+      name: 'redis-connection',
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        store: redisStore,
-        url: configService.getOrThrow<string>('REDIS_URL'),
+        connection: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+          password: configService.get<string>('REDIS_PASSWORD'),
+          db: configService.get<number>('REDIS_DB', 0),
+          // tls: process.env.NODE_ENV === 'production' ? {} : undefined,
+          maxRetriesPerRequest: null,
+          lazyConnect: true,
+        },
       }),
       inject: [ConfigService],
-      isGlobal: true,
     }),
   ],
   providers: [RdbService],

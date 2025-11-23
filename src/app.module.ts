@@ -6,12 +6,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { User } from './auth/entity/user.entity';
+import { RdbModule } from './auth/redisdb/rdb.module';
 import { AppDataSource } from './data-source';
 import { NotificationModule } from './notification/notification.module';
 import { PoolModule } from './pool/pool.module';
 
 @Module({
   imports: [
+    RdbModule,
     ConfigModule.forRoot({ isGlobal: true, envFilePath: `.env` }),
     AuthModule,
     PoolModule,

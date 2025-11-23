@@ -1,146 +1,119 @@
-import type { Cache } from 'cache-manager';
+import { Queue } from 'bullmq';
+import Redis, { Cluster } from 'ioredis';
 import { CONSTANTS } from 'src/enum/constants.enum';
 import jwtConfig from 'src/utils/config/jwt.config';
 
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable } from '@nestjs/common';
-
-import type { ConfigType } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
 
 @Injectable()
-export class RdbService {
+export class RdbService implements OnModuleInit {
+  private readonly logger = new Logger(RdbService.name);
+  private redisClient: Redis | Cluster;
+
   constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @InjectQueue('redis-connection') private readonly redisQueue: Queue,
     @Inject(jwtConfig.KEY)
     private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
   ) {}
 
-  private getRedisClient() {
-    // For cache-manager v7+, access the store differently
-    const store = (this.cacheManager as any).store;
-    return store.getClient ? store.getClient() : store.client;
+  async onModuleInit() {
+    this.redisClient = await this.redisQueue.client;
+    this.logger.log('Redis client initialized via BullMQ');
   }
 
-  async storeRefreshTokenId(key: string, randomId: string) {
-    const client = this.getRedisClient();
-    await client.SET(`refresh-token:${key}`, randomId, {
-      EX: this.jwtConfiguration.refreshTokenTtl,
-    });
+  async storeRefreshTokenId(userId: string, randomId: string) {
+    await this.redisClient.set(
+      `refresh-token:${userId}`,
+      randomId,
+      'EX',
+      this.jwtConfiguration.refreshTokenTtl,
+    );
   }
 
-  async getRefreshTokenId(key: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`refresh-token:${key}`);
+  async getRefreshTokenId(userId: string): Promise<string | null> {
+    return await this.redisClient.get(`refresh-token:${userId}`);
   }
 
-  async storeSignUpOtp(key: string, otp: string) {
-    const client = this.getRedisClient();
-    await client.SET(`signup:otp:${key}`, otp, {
-      EX: Number(CONSTANTS.TTL_10_MIN),
-    });
+  async storeSignUpOtp(emailOrPhone: string, otp: string) {
+    await this.redisClient.set(`signup:otp:${emailOrPhone}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
   }
 
-  async getSignUpOtp(key: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`signup:otp:${key}`);
+  async getSignUpOtp(emailOrPhone: string): Promise<string | null> {
+    return await this.redisClient.get(`signup:otp:${emailOrPhone}`);
   }
 
-  async deleteSignUpOtp(key: string) {
-    const client = this.getRedisClient();
-    return await client.DEL(`signup:otp:${key}`);
+  async deleteSignUpOtp(emailOrPhone: string) {
+    await this.redisClient.del(`signup:otp:${emailOrPhone}`);
   }
 
-  async storePasswordResetOtp(key: string, otp: string) {
-    const client = this.getRedisClient();
-    await client.SET(`password-reset:otp:${key}`, otp, {
-      EX: Number(CONSTANTS.TTL_10_MIN),
-    });
+  async storePasswordResetOtp(email: string, otp: string) {
+    await this.redisClient.set(`password-reset:otp:${email}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
   }
 
-  async getPasswordResetOtp(key: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`password-reset:otp:${key}`);
+  async getPasswordResetOtp(email: string): Promise<string | null> {
+    return await this.redisClient.get(`password-reset:otp:${email}`);
   }
 
-  async deletePasswordResetOtp(key: string) {
-    const client = this.getRedisClient();
-    return await client.DEL(`password-reset:otp:${key}`);
+  async deletePasswordResetOtp(email: string) {
+    await this.redisClient.del(`password-reset:otp:${email}`);
   }
 
   async storeAdminPasswordResetOtp(otp: string, email: string) {
-    const client = this.getRedisClient();
-    await client.SET(`admin-password-reset:otp:${otp}`, email, {
-      EX: Number(CONSTANTS.TTL_10_MIN),
-    });
+    await this.redisClient.set(`admin-password-reset:otp:${otp}`, email, 'EX', CONSTANTS.TTL_10_MIN);
   }
 
-  async getAdminPasswordResetOtp(otp: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`admin-password-reset:otp:${otp}`);
+  async getAdminPasswordResetOtp(otp: string): Promise<string | null> {
+    return await this.redisClient.get(`admin-password-reset:otp:${otp}`);
   }
 
   async storeUserAccountDeleteOtpData(otp: string, data: string) {
-    const client = this.getRedisClient();
-    await client.SET(`delete-user:otp:${otp}`, data, {
-      EX: Number(CONSTANTS.TTL_10_MIN),
-    });
+    await this.redisClient.set(`delete-user:otp:${otp}`, data, 'EX', CONSTANTS.TTL_10_MIN);
   }
 
-  async getUserAccountDeleteOtpData(otp: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`delete-user:otp:${otp}`);
+  async getUserAccountDeleteOtpData(otp: string): Promise<string | null> {
+    return await this.redisClient.get(`delete-user:otp:${otp}`);
   }
 
-  async storeResetUsernameOtp(key: string, otp: string) {
-    const client = this.getRedisClient();
-    await client.SET(`reset-username:otp:${key}`, otp, {
-      EX: Number(CONSTANTS.TTL_10_MIN),
-    });
+  async storeResetUsernameOtp(userId: string, otp: string) {
+    await this.redisClient.set(`reset-username:otp:${userId}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
   }
 
-  async getResetUsernameOtp(key: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`reset-username:otp:${key}`);
+  async getResetUsernameOtp(userId: string): Promise<string | null> {
+    return await this.redisClient.get(`reset-username:otp:${userId}`);
   }
 
-  async storeEmailSetOtp(key: string, otp: string) {
-    const client = this.getRedisClient();
-    await client.SET(`set-email:otp:${key}`, otp, {
-      EX: Number(CONSTANTS.TTL_10_MIN),
-    });
+  async storeEmailSetOtp(userId: string, otp: string) {
+    await this.redisClient.set(`set-email:otp:${userId}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
   }
 
-  async getEmailSetOtp(key: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`set-email:otp:${key}`);
+  async getEmailSetOtp(userId: string): Promise<string | null> {
+    return await this.redisClient.get(`set-email:otp:${userId}`);
   }
 
-  async storePhoneSetOtp(key: string, otp: string) {
-    const client = this.getRedisClient();
-    await client.SET(`set-phone:otp:${key}`, otp, {
-      EX: Number(CONSTANTS.TTL_10_MIN),
-    });
+  async storePhoneSetOtp(userId: string, otp: string) {
+    await this.redisClient.set(`set-phone:otp:${userId}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
   }
 
-  async getPhoneSetOtp(key: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`set-phone:otp:${key}`);
+  async getPhoneSetOtp(userId: string): Promise<string | null> {
+    return await this.redisClient.get(`set-phone:otp:${userId}`);
   }
 
-  async storeTrackWrongPasswordUsage(key: string, count: string) {
-    const client = this.getRedisClient();
-    await client.SET(`wrong-password-usage:user-id:${key}`, count.toString(), {
-      EX: Number(CONSTANTS.TTL_3_HR),
-    });
+  async storeTrackWrongPasswordUsage(userId: string, count: number) {
+    await this.redisClient.set(`wrong-password-usage:user-id:${userId}`, count.toString(), 'EX', CONSTANTS.TTL_3_HR);
   }
 
-  async getTrackWrongPasswordUsage(key: string) {
-    const client = this.getRedisClient();
-    return await client.GET(`wrong-password-usage:user-id:${key}`);
+  async getTrackWrongPasswordUsage(userId: string): Promise<string | null> {
+    return await this.redisClient.get(`wrong-password-usage:user-id:${userId}`);
   }
 
-  async getTrackWrongPasswordTTL(key: string) {
-    const client = this.getRedisClient();
-    return await client.TTL(`wrong-password-usage:user-id:${key}`);
+  async getTrackWrongPasswordTTL(userId: string): Promise<number> {
+    return await this.redisClient.ttl(`wrong-password-usage:user-id:${userId}`);
+  }
+
+  // disconnect on shutdown
+  async onModuleDestroy() {
+    await this.redisClient.quit();
   }
 }
