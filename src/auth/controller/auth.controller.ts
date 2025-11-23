@@ -1,3 +1,4 @@
+import { CONSTANTS } from 'src/enum/constants.enum';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from 'src/enum/responses.enum';
 import { generateOTP } from 'src/utils/utils';
 
@@ -47,7 +48,7 @@ export class AuthController {
         const otp: string = generateOTP();
 
         await this.rdbService.storeSignUpOtp(`${body.email}`, otp);
-        // this.notificationClient.emit(CONSTANTS.EMAIL_OTP, { email: body.email, otp });
+        this.mailService.setEmailOtpMailFormat({ email: body.email, otp });
 
         return {
             statusCode: HttpStatus.CREATED,

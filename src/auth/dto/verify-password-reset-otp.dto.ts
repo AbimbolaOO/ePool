@@ -18,7 +18,7 @@ export class VerifyPasswordResetOtpDto {
 
   @ApiProperty({
     description: 'User email address',
-    example: 'abimbolaolayemiwhyte@gmai.com',
+    example: 'abimbolaolayemiwhyte@gmail.com',
     format: 'email',
     required: false,
   })

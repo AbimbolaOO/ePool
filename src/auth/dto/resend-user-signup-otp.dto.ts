@@ -6,7 +6,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class ResendUserSignUpOtpDto {
   @ApiProperty({
     description: 'User email address to resend OTP',
-    example: 'abimbolaolayemiwhyte@gmai.com',
+    example: 'abimbolaolayemiwhyte@gmail.com',
     format: 'email',
     required: false,
   })

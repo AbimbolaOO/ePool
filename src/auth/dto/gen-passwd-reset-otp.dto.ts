@@ -6,7 +6,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class genPasswdResetOtpDto {
   @ApiProperty({
     description: 'User email address to send password reset OTP',
-    example: 'abimbolaolayemiwhyte@gmai.com',
+    example: 'abimbolaolayemiwhyte@gmail.com',
     format: 'email',
     required: false,
   })

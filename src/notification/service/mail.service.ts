@@ -47,7 +47,7 @@ export class MailService {
     }: ISendAdminEmailPasswordMailFormat) {
         return this.sendMail({
             to: [`${email}`],
-            subject: 'Brane - Admin Welcome',
+            subject: 'EPool - Admin Welcome',
             html: EmailTemplates.sendAdminEmailPasswordTemplate(password),
         });
     }
@@ -55,7 +55,7 @@ export class MailService {
     signUpVerificationMailFormat({ email, otp, name }: ISignUpVerificationMailFormat) {
         return this.sendMail({
             to: [`${email}`],
-            subject: 'Brane - User Verification',
+            subject: 'EPool - User Verification',
             html: EmailTemplates.emailVerificationTemplate(otp),
         });
     }
@@ -63,7 +63,7 @@ export class MailService {
     resetPasswordMailFormat({ email, otp }: IResetPasswordMailFormat) {
         return this.sendMail({
             to: [`${email}`],
-            subject: 'Brane - Password Reset',
+            subject: 'EPool - Password Reset',
             html: EmailTemplates.passwordResetTemplate(otp),
         });
     }
@@ -71,7 +71,7 @@ export class MailService {
     adminPasswordResetMailFormat({ email, otp }: IResetPasswordMailFormat) {
         return this.sendMail({
             to: [`${email}`],
-            subject: 'Brane - Admin Password Reset',
+            subject: 'EPool - Admin Password Reset',
             html: EmailTemplates.adminPasswordResetTemplate(otp),
         });
     }
@@ -79,7 +79,7 @@ export class MailService {
     setEmailOtpMailFormat({ email, otp }: IResetPasswordMailFormat) {
         return this.sendMail({
             to: [`${email}`],
-            subject: 'Brane - Email Verification',
+            subject: 'EPool - Email Verification',
             html: EmailTemplates.verifyEmailEmailTemplate(otp),
         });
     }
@@ -87,7 +87,7 @@ export class MailService {
     userSignupWelcomeMailFormat({ email, name }: IUserSignupWelcomeMailFormat) {
         return this.sendMail({
             to: [`${email}`],
-            subject: 'Welcome to Brane',
+            subject: 'Welcome to EPool',
             html: EmailTemplates.userSignupWelcomeMailFormat(name),
         });
     }
