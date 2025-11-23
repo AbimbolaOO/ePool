@@ -25,7 +25,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('Authentication', 'User authentication and authorization endpoints')
     .addTag('Notifications', 'Email and SMS notification services')
-    .addTag('Pool Management', 'Pool-related operations and management')
+    .addTag('Pool Management', 'Media (photo, video) group creation and management endpoints')
     .addBearerAuth(
       {
         type: 'http',

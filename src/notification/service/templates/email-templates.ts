@@ -1,8 +1,8 @@
 export class EmailTemplates {
 
     public static sendAdminEmailPasswordTemplate(password: string) {
-        return 'Brane Administrator' +
-            "Here is the default password associated with your account to sign in to the Brane's admin dashboard:";
+        return 'ePool Administrator' +
+            "Here is the default password associated with your account to sign in to the ePool's admin dashboard:";
     }
 
     static emailVerificationTemplate(otp: string) {
@@ -27,11 +27,11 @@ export class EmailTemplates {
     }
 
     static userSignupWelcomeMailFormat(name?: string) {
-        return `Welcome to Brane` +
+        return `Welcome to ePool` +
             `Hi ${name ?? 'there'},<br/>
-      Welcome to Brane! You're now part of a platform that turns everyday purchases into ownership opportunities.
+      Welcome to ePool! You're now part of a platform that turns everyday purchases into ownership opportunities.
 
       Cheers to owning more of what matters,
-      The Brane Team`;
+      The ePool Team`;
     }
 }
