@@ -12,6 +12,7 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { MailService } from '../../notification/service/mail.service';
 import { genPasswdResetOtpDto } from '../dto/gen-passwd-reset-otp.dto';
@@ -25,6 +26,7 @@ import { VerifyUserSignupDto } from '../dto/verify-user-signup.dto';
 import { RdbService } from '../redisdb/rdb.service';
 import { AuthService } from '../service/auth.service';
 
+@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
     constructor(
@@ -34,6 +36,10 @@ export class AuthController {
         private readonly mailService: MailService,
     ) {}
 
+    @ApiOperation({
+        summary: 'User Registration',
+        description: 'Register a new user account. An OTP will be sent to the provided email for verification.'
+    })
     @Post('signup')
     @HttpCode(HttpStatus.CREATED)
     async signUp(@Body() body: SignupUserDto) {
@@ -52,7 +58,10 @@ export class AuthController {
         };
     }
 
-    // @serialize(SignUserResDto)
+    @ApiOperation({
+        summary: 'Verify User Signup',
+        description: 'Verify user email using the OTP sent during registration'
+    })
     @Post('signup/verify-otp')
     @HttpCode(HttpStatus.OK)
     async verifySignup(@Body() body: VerifyUserSignupDto) {
@@ -77,6 +86,10 @@ export class AuthController {
         };
     }
 
+    @ApiOperation({
+        summary: 'Resend Verification OTP',
+        description: 'Resend OTP to user email for account verification'
+    })
     @Post('signup/resend-otp')
     @HttpCode(HttpStatus.OK)
     async ResendVerificationOtp(@Body() body: ResendUserSignUpOtpDto) {
@@ -101,7 +114,10 @@ export class AuthController {
         };
     }
 
-    // @Serialize(SignUserResDto)
+    @ApiOperation({
+        summary: 'User Sign In',
+        description: 'Authenticate user with email and password'
+    })
     @Post('signin')
     @HttpCode(HttpStatus.OK)
     async signIn(@Body() body: SignInUserDto) {
@@ -118,7 +134,10 @@ export class AuthController {
         };
     }
 
-    // @Serialize(AuthCredentialsDto)
+    @ApiOperation({
+        summary: 'Refresh Access Token',
+        description: 'Generate a new access token using a valid refresh token'
+    })
     @Post('refresh-token')
     @HttpCode(HttpStatus.OK)
     async refreshToken(@Body() body: RefreshTokenDto) {
@@ -130,6 +149,10 @@ export class AuthController {
         };
     }
 
+    @ApiOperation({
+        summary: 'Generate Password Reset OTP',
+        description: 'Generate and send OTP for password reset to user email'
+    })
     @Post('reset-password')
     @HttpCode(HttpStatus.OK)
     async genPasswordResetOtp(@Body() body: genPasswdResetOtpDto) {
@@ -154,6 +177,10 @@ export class AuthController {
         };
     }
 
+    @ApiOperation({
+        summary: 'Verify Password Reset OTP',
+        description: 'Verify the OTP sent for password reset'
+    })
     @Post('verify-reset-password')
     @HttpCode(HttpStatus.OK)
     async validatePasswordResetOtp(@Body() body: VerifyPasswordResetOtpDto) {
@@ -174,6 +201,10 @@ export class AuthController {
         };
     }
 
+    @ApiOperation({
+        summary: 'Reset User Password',
+        description: 'Reset user password after OTP verification'
+    })
     @Patch('reset-password')
     @HttpCode(HttpStatus.OK)
     async PasswordReset(@Body() body: PasswordResetDto) {

@@ -27,9 +27,7 @@ export class User {
   lastName: string;
 
   @Column()
-  middleName: string;
-
-  @Column()
+  @Column({ default: null })
   gender: string;
 
   @Column()
@@ -49,7 +47,4 @@ export class User {
 
   @DeleteDateColumn()
   deletedAt?: Date;
-
-  @Column({ nullable: true, default: null })
-  archivedAt?: Date;
 }
