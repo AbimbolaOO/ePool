@@ -6,9 +6,9 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { NotificationModule } from '../notification/notification.module';
+import { RdbModule } from '../redisdb/rdb.module';
 import { AuthController } from './controller/auth.controller';
 import { User } from './entity/user.entity';
-import { RdbModule } from './redisdb/rdb.module';
 import { AuthService } from './service/auth.service';
 import { UserService } from './service/user.service';
 

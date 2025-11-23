@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { MailService } from '../../notification/service/mail.service';
+import { RdbService } from '../../redisdb/rdb.service';
 import { genPasswdResetOtpDto } from '../dto/gen-passwd-reset-otp.dto';
 import { PasswordResetDto } from '../dto/password-reset.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
@@ -24,7 +25,6 @@ import { SignInUserDto } from '../dto/signin-user.dto';
 import { SignupUserDto } from '../dto/signup-user.dto';
 import { VerifyPasswordResetOtpDto } from '../dto/verify-password-reset-otp.dto';
 import { VerifyUserSignupDto } from '../dto/verify-user-signup.dto';
-import { RdbService } from '../redisdb/rdb.service';
 import { AuthService } from '../service/auth.service';
 
 @ApiTags('Authentication')

@@ -18,12 +18,12 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { RdbService } from '../../redisdb/rdb.service';
 import { PasswordResetDto } from '../dto/password-reset.dto';
 import { ResendUserSignUpOtpDto } from '../dto/resend-user-signup-otp.dto';
 import { SignInUserDto } from '../dto/signin-user.dto';
 import { VerifyUserSignupDto } from '../dto/verify-user-signup.dto';
 import { User } from '../entity/user.entity';
-import { RdbService } from '../redisdb/rdb.service';
 import { UserService } from './user.service';
 
 import type { ConfigType } from '@nestjs/config';
