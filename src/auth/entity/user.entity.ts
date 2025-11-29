@@ -3,10 +3,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
+
+import { PoolFolder } from '../../pool/entity/pool-folder.entity';
 
 @Entity()
 export class User {
@@ -26,18 +29,30 @@ export class User {
   @Column({ default: null })
   lastName: string;
 
-  @Column()
   @Column({ default: null })
   gender: string;
 
-  @Column()
+  @Column({ default: null })
   password: string;
 
   @Column({ default: false })
   isVerified: boolean;
 
+  @Column({ default: true })
+  isAnonymous: boolean;
+
   @Column({ default: false })
   isDeactivated: boolean;
+
+  @OneToMany(
+    (type) => PoolFolder,
+    (poolFolder) => poolFolder.owner,
+    {
+      onDelete: 'CASCADE',
+      // cascade: true, // ['insert']
+    },
+  )
+  poolFolders: PoolFolder[];
 
   @CreateDateColumn()
   createdAt: Date;

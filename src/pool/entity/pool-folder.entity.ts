@@ -1,0 +1,41 @@
+import {
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    OneToOne,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
+} from 'typeorm';
+
+import { User } from '../../auth/entity/user.entity';
+import { PoolFile } from './pool-file.entity';
+import { PoolMember } from './pool-member.entity';
+
+@Entity("pool_folder")
+export class PoolFolder {
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
+
+    @ManyToOne(() => User, user => user.poolFolders, { onDelete: 'CASCADE' })
+    @JoinColumn()
+    owner: User;
+
+    @OneToMany(() => PoolMember, poolMember => poolMember.poolFolder, { cascade: true })
+    members: PoolMember[];
+
+    @OneToOne(() => PoolFile, poolFile => poolFile.poolFolder, { cascade: true })
+    @JoinColumn()
+    file: PoolFile;
+
+    @Column({ length: 64 })
+    name: string;
+
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
+}

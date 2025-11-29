@@ -9,6 +9,7 @@ Step and the reaction to the step
   - Pool connector (UserConn)
 
 - A UserCRT creates a media pool
+  - Every pool created must have a pool name
   - The UserCRT get a qrCode link that anyone who scans the link is automatically added to that media pool;
     - UserCRT is also required to provide a username if they do not have a account with validated username
   - When UserConn join this pool

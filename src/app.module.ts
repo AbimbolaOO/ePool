@@ -8,6 +8,9 @@ import { AuthModule } from './auth/auth.module';
 import { User } from './auth/entity/user.entity';
 import { AppDataSource } from './data-source';
 import { NotificationModule } from './notification/notification.module';
+import { PoolFile } from './pool/entity/pool-file.entity';
+import { PoolFolder } from './pool/entity/pool-folder.entity';
+import { PoolMember } from './pool/entity/pool-member.entity';
 import { PoolModule } from './pool/pool.module';
 import { RdbModule } from './redisdb/rdb.module';
 
@@ -30,6 +33,9 @@ import { RdbModule } from './redisdb/rdb.module';
 
     TypeOrmModule.forFeature([
       User,
+      PoolMember,
+      PoolFolder,
+      PoolFile,
     ]),
   ],
   controllers: [AppController],

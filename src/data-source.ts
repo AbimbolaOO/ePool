@@ -2,6 +2,9 @@ import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 
 import { User } from './auth/entity/user.entity';
+import { PoolFile } from './pool/entity/pool-file.entity';
+import { PoolFolder } from './pool/entity/pool-folder.entity';
+import { PoolMember } from './pool/entity/pool-member.entity';
 
 dotenv.config();
 
@@ -19,6 +22,9 @@ export const AppDataSource = new DataSource({
     : false,
   entities: [
     User,
+    PoolMember,
+    PoolFolder,
+    PoolFile,
   ],
   migrationsTableName: 'migration',
   migrations: [__dirname + '/migrations/*.ts'],
