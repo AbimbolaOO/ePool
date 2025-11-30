@@ -176,12 +176,8 @@ export class PoolFolderController {
         @Req() request: AuthenticatedRequest,
     ) {
         const userId = request.user.sub;
-        const result = await this.poolService.deletePoolFolder(params.id, userId);
+        await this.poolService.deletePoolFolder(params.id, userId);
 
-        return {
-            statusCode: HttpStatus.OK,
-            message: result.message,
-            data: null,
-        };
+        return null;
     }
 }
