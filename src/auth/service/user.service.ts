@@ -1,6 +1,4 @@
-import { UUID } from 'crypto';
 import { ERROR_MESSAGES } from 'src/enum/responses.enum';
-import { DataSource } from 'typeorm';
 import { Repository } from 'typeorm/browser/repository/Repository.js';
 
 import { Injectable, NotFoundException } from '@nestjs/common';

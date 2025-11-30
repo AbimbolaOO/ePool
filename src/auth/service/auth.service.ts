@@ -158,7 +158,6 @@ export class AuthService {
                 userData.id,
             );
 
-            // JWT Access reuse detection
             if (refreshTokenId !== cachedRefreshTokenId) {
                 throw new Error();
             }
