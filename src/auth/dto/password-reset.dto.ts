@@ -1,12 +1,5 @@
 import { Transform } from 'class-transformer';
-import {
-  IsEmail,
-  IsOptional,
-  IsPhoneNumber,
-  IsString,
-  IsStrongPassword,
-  Length,
-} from 'class-validator';
+import { IsEmail, IsString, IsStrongPassword, Length } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -15,10 +8,9 @@ export class PasswordResetDto {
     description: 'User email address',
     example: 'abimbolaolayemiwhyte@gmail.com',
     format: 'email',
-    required: false,
+    required: true,
   })
   @IsEmail()
-  @IsOptional()
   @Transform(({ value }) => value?.toLowerCase())
   email: string;
 

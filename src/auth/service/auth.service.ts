@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { ERROR_MESSAGES } from 'src/enum/responses.enum';
 import { IJwtPayLoadData } from 'src/interface';
+import { MailService } from 'src/notification/service/mail.service';
 import jwtConfig from 'src/utils/config/jwt.config';
 import { compareHash, createHash } from 'src/utils/utils';
 import { QueryFailedError, Repository } from 'typeorm';
@@ -22,6 +23,7 @@ import { RdbService } from '../../redisdb/rdb.service';
 import { PasswordResetDto } from '../dto/password-reset.dto';
 import { ResendUserSignUpOtpDto } from '../dto/resend-user-signup-otp.dto';
 import { SignInUserDto } from '../dto/signin-user.dto';
+import { VerifyPasswordResetOtpDto } from '../dto/verify-password-reset-otp.dto';
 import { VerifyUserSignupDto } from '../dto/verify-user-signup.dto';
 import { User } from '../entity/user.entity';
 import { UserService } from './user.service';
@@ -36,12 +38,15 @@ export class AuthService {
         private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
         private readonly rdbService: RdbService,
         private jwtService: JwtService,
+        private readonly mailService: MailService,
     ) {}
 
-    async signUp(signupData) {
+    async signUp(data, otp) {
         try {
-            signupData.password = await createHash(signupData.password);
-            await this.userService.create({ ...signupData });
+            data.password = await createHash(data.password);
+            await this.userService.create({ ...data, isAnonymous: false });
+            await this.rdbService.storeSignUpOtp(`${data.email}`, otp);
+            this.mailService.setEmailOtpMailFormat({ email: data.email, otp });
         } catch (err) {
             if (
                 err instanceof QueryFailedError &&
@@ -62,33 +67,26 @@ export class AuthService {
         }
     }
 
-    async verifySignup(verificationData: VerifyUserSignupDto) {
-        const email = verificationData.email;
-        const signupData = { isVerified: true };
-        if (email) {
-            signupData['emailVerifiedAt'] = new Date();
+    async verifySignup(data: VerifyUserSignupDto) {
+        const cachedData = await this.rdbService.getSignUpOtp(`${data.email}`);
+
+        if (cachedData === null || cachedData !== data.otp) {
+            throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
         }
 
-        const verifiedUser = await this.userService.update(signupData, email);
+        const verifiedUser = await this.userService.update({ isVerified: true }, data.email);
 
-        const { accessToken, refreshToken } = await this.generateTokens(
-            verifiedUser as User,
-        );
+        await this.rdbService.deleteSignUpOtp(`${data.email}`);
 
-        const signInResData = {
-            ...verifiedUser,
-            authCredentials: {
-                accessToken,
-                refreshToken,
-                accessTokenTtl: this.jwtConfiguration.accessTokenTtl,
-            },
-        };
+        if (verifiedUser.email) {
+            this.mailService.userSignupWelcomeMailFormat({ email: data.email });
+        }
 
-        return signInResData;
+        return;
     }
 
-    async resendVerificationOtp(resendVerificationData: ResendUserSignUpOtpDto) {
-        const email = resendVerificationData.email;
+    async resendVerificationOtp(data: ResendUserSignUpOtpDto, otp: string) {
+        const email = data.email;
 
         let user: Partial<User> | null = null;
 
@@ -101,6 +99,10 @@ export class AuthService {
         } else if (!user) {
             throw new BadRequestException(ERROR_MESSAGES.INVALID_OTP_RESEND_ATTEMPT);
         }
+
+
+        await this.rdbService.storeSignUpOtp(`${data.email}`, otp);
+        this.mailService.setEmailOtpMailFormat({ email: data.email, otp });
     }
 
     async signIn(signinData: SignInUserDto) {
@@ -170,17 +172,41 @@ export class AuthService {
         }
     }
 
-    async validatePasswordResetUser(passwordResetData: Partial<User>) {
+    async validatePasswordResetUser(data: Partial<User>, otp: string) {
         let user: Partial<User> | null = null;
-        if (passwordResetData.email) {
-            user = await this.userService.getByEmail(passwordResetData.email);
+        if (data.email) {
+            user = await this.userService.getByEmail(data.email);
         }
+
+        await this.rdbService.storePasswordResetOtp(data.email, otp);
+        this.mailService.setEmailOtpMailFormat({ email: data.email, otp });
+
         if (!user) {
             throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
         }
     }
 
+    async validatePasswordResetOtp(data: VerifyPasswordResetOtpDto) {
+        if (!data.email) {
+            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
+        }
+
+        const otp = await this.rdbService.getPasswordResetOtp(data.email);
+
+        if (otp !== data.otp) {
+            throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
+        }
+
+        return;
+    }
+
     async resetPassword(data: PasswordResetDto) {
+        const cachedData = await this.rdbService.getPasswordResetOtp(data.email);
+
+        if (cachedData === null || cachedData !== data.otp) {
+            throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
+        }
+
         if (!data.password) {
             throw new BadRequestException('Password is required');
         }
@@ -205,6 +231,8 @@ export class AuthService {
         }
 
         await this.userService.update({ password: newPassword }, data.email);
+
+        await this.rdbService.deletePasswordResetOtp(data.email);
 
         return true;
     }

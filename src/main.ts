@@ -23,9 +23,6 @@ async function bootstrap() {
     .setTitle('ePool API Documentation')
     .setDescription('A comprehensive API for ePool application with authentication, notifications, and pool management features')
     .setVersion('1.0')
-    .addTag('Authentication', 'User authentication and authorization endpoints')
-    .addTag('Notifications', 'Email and SMS notification services')
-    .addTag('Pool Management', 'Media (photo, video) group creation and management endpoints')
     .addBearerAuth(
       {
         type: 'http',

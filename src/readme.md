@@ -17,3 +17,13 @@ Step and the reaction to the step
     - UserConn is also required to provide there username when they are added to the pool
       - UserConn is only required to provide a username every time they connect to the pool for the first except the have a register account with a validated uniques username
     - When UserConn join the pool he get a unique identify that identify them through out the lifecycle of the the pool
+
+For users that already have a username and what to create an account, use there username to determine if they have an existing account and if they do ask them for just email and password when they want to create there account
+
+## Futures
+
+- Analytics for the creator to see who contributed the most pictures
+
+## Future ideas
+
+- Make this into an online digital album for events.

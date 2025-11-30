@@ -18,4 +18,6 @@ export enum ERROR_MESSAGES {
   INVALID_OTP_RESEND_ATTEMPT = 'Invalid OTP resend attempt',
   PLEASE_USE_NEW_PASSWORD = 'Please use a new password',
   NO_PASSWORD = 'No password set for this account',
+  YOU_DO_NOT_HAVE_ACCESS = 'You do not have access',
+  ACCOUNT_HAS_BEEN_DEACTIVATED = 'Account has been deactivated',
 }

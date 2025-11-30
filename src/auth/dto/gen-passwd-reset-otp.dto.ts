@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsOptional, IsPhoneNumber } from 'class-validator';
+import { IsEmail } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -8,10 +8,9 @@ export class genPasswdResetOtpDto {
     description: 'User email address to send password reset OTP',
     example: 'abimbolaolayemiwhyte@gmail.com',
     format: 'email',
-    required: false,
+    required: true,
   })
   @IsEmail()
-  @IsOptional()
   @Transform(({ value }) => value?.toLowerCase())
   email: string;
 }

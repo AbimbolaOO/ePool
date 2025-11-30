@@ -19,7 +19,7 @@ import { UserService } from './service/user.service';
     NotificationModule,
     ConfigModule.forFeature(jwtConfig),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'defaultsecret',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
   ],

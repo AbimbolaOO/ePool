@@ -38,3 +38,7 @@ export interface IUserSignupWelcomeMailFormat {
   name?: string;
 }
 
+export interface AuthenticatedRequest extends Request {
+  user: IJwtPayLoadData;
+}
+

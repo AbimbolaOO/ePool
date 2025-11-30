@@ -1,5 +1,5 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsEmail, IsOptional, IsPhoneNumber, IsString, Length } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Length } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -8,10 +8,9 @@ export class VerifyUserSignupDto {
     description: 'User email address',
     example: 'abimbolaolayemiwhyte@gmail.com',
     format: 'email',
-    required: false,
+    required: true,
   })
   @IsEmail()
-  @IsOptional()
   @Expose()
   @Transform(({ value }) => value?.toLowerCase())
   email: string;

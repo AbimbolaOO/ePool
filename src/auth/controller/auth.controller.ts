@@ -1,4 +1,3 @@
-import { CONSTANTS } from 'src/enum/constants.enum';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from 'src/enum/responses.enum';
 import { generateOTP } from 'src/utils/utils';
 
@@ -10,13 +9,10 @@ import {
     HttpStatus,
     Patch,
     Post,
-    UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { MailService } from '../../notification/service/mail.service';
-import { RdbService } from '../../redisdb/rdb.service';
 import { genPasswdResetOtpDto } from '../dto/gen-passwd-reset-otp.dto';
 import { PasswordResetDto } from '../dto/password-reset.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
@@ -31,10 +27,8 @@ import { AuthService } from '../service/auth.service';
 @Controller('auth')
 export class AuthController {
     constructor(
-        private readonly rdbService: RdbService,
         private readonly authService: AuthService,
         private readonly configService: ConfigService,
-        private readonly mailService: MailService,
     ) {}
 
     @ApiOperation({
@@ -44,11 +38,8 @@ export class AuthController {
     @Post('signup')
     @HttpCode(HttpStatus.CREATED)
     async signUp(@Body() body: SignupUserDto) {
-        await this.authService.signUp(body);
         const otp: string = generateOTP();
-
-        await this.rdbService.storeSignUpOtp(`${body.email}`, otp);
-        this.mailService.setEmailOtpMailFormat({ email: body.email, otp });
+        await this.authService.signUp(body, otp);
 
         return {
             statusCode: HttpStatus.CREATED,
@@ -66,19 +57,7 @@ export class AuthController {
     @Post('signup/verify-otp')
     @HttpCode(HttpStatus.OK)
     async verifySignup(@Body() body: VerifyUserSignupDto) {
-        const cachedData = await this.rdbService.getSignUpOtp(`${body.email}`);
-
-        if (cachedData === null || cachedData !== body.otp) {
-            throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
-        }
-
         const resData = await this.authService.verifySignup(body);
-
-        await this.rdbService.deleteSignUpOtp(`${body.email}`);
-
-        if (resData.email) {
-            this.mailService.userSignupWelcomeMailFormat({ email: body.email });
-        }
 
         return {
             statusCode: HttpStatus.OK,
@@ -98,13 +77,8 @@ export class AuthController {
             throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
         }
 
-        await this.authService.resendVerificationOtp(body);
         const otp: string = generateOTP();
-
-        if (body.email) {
-            await this.rdbService.storeSignUpOtp(`${body.email}`, otp);
-            this.mailService.setEmailOtpMailFormat({ email: body.email, otp });
-        }
+        await this.authService.resendVerificationOtp(body, otp);
 
         return {
             statusCode: HttpStatus.OK,
@@ -157,17 +131,8 @@ export class AuthController {
     @Post('reset-password')
     @HttpCode(HttpStatus.OK)
     async genPasswordResetOtp(@Body() body: genPasswdResetOtpDto) {
-        if (!body.email) {
-            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
-        }
-
-        await this.authService.validatePasswordResetUser(body);
         const otp: string = generateOTP();
-
-        if (body.email) {
-            await this.rdbService.storePasswordResetOtp(body.email, otp);
-            this.mailService.setEmailOtpMailFormat({ email: body.email, otp });
-        }
+        await this.authService.validatePasswordResetUser(body, otp);
 
         return {
             statusCode: HttpStatus.OK,
@@ -185,15 +150,7 @@ export class AuthController {
     @Post('verify-reset-password')
     @HttpCode(HttpStatus.OK)
     async validatePasswordResetOtp(@Body() body: VerifyPasswordResetOtpDto) {
-        if (!body.email) {
-            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
-        }
-
-        const otp = await this.rdbService.getPasswordResetOtp(body.email);
-
-        if (otp !== body.otp) {
-            throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
-        }
+        await this.authService.validatePasswordResetOtp(body);
 
         return {
             statusCode: HttpStatus.OK,
@@ -208,18 +165,8 @@ export class AuthController {
     })
     @Patch('reset-password')
     @HttpCode(HttpStatus.OK)
-    async PasswordReset(@Body() body: PasswordResetDto) {
-        if (!body.email) {
-            throw new BadRequestException(ERROR_MESSAGES.EMAIL_MUST_BE_SPECIFIED);
-        }
-
-        const cachedData = await this.rdbService.getPasswordResetOtp(body.email);
-        if (cachedData === null || cachedData !== body.otp) {
-            throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
-        }
-
+    async passwordReset(@Body() body: PasswordResetDto) {
         await this.authService.resetPassword(body);
-        await this.rdbService.deletePasswordResetOtp(body.email);
 
         return {
             statusCode: HttpStatus.OK,

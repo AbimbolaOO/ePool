@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsOptional, IsPhoneNumber, IsString, IsStrongPassword } from 'class-validator';
+import { IsEmail, IsString, IsStrongPassword } from 'class-validator';
 
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -8,12 +8,19 @@ export class SignupUserDto {
     description: 'User email address',
     example: 'abimbolaolayemiwhyte@gmail.com',
     format: 'email',
-    required: false,
+    required: true,
   })
   @IsEmail()
   @Transform(({ value }) => value?.toLowerCase())
-  @IsOptional()
   email: string;
+
+  @ApiProperty({
+    description: 'User username',
+    example: 'Whyte',
+    required: true,
+  })
+  @IsString()
+  username: string;
 
   @ApiProperty({
     description: 'Strong password with at least 8 characters, including uppercase, lowercase, number, and special character',
