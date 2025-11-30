@@ -23,7 +23,7 @@ import {
     PoolMemberParamsDto,
     PoolMemberQueryDto,
     UpdatePoolMemberDto,
-} from '../dto';
+} from '../dto/request';
 import { PoolMemberService } from '../service/pool-member.service';
 
 interface AuthenticatedRequest extends Request {
@@ -36,6 +36,34 @@ export class PoolMemberController {
     constructor(
         private readonly poolMemberService: PoolMemberService,
     ) {}
+
+    @ApiOperation({
+        summary: 'Update Pool Member',
+        description: 'Update a pool member. Only the owner or members with owner privileges can update.'
+    })
+    @ApiBearerAuth('JWT-auth')
+    @UseGuards(AuthGuard)
+    @Patch(':id')
+    @HttpCode(HttpStatus.OK)
+    async generateLinkForAddingMembers(
+        @Param() params: PoolMemberParamsDto,
+        @Body() updatePoolMemberDto: UpdatePoolMemberDto,
+        @Req() request: AuthenticatedRequest,
+    ) {
+        const userId = request.user.sub;
+
+        const poolMember = await this.poolMemberService.updatePoolMember(
+            params.id,
+            updatePoolMemberDto,
+            userId,
+        );
+
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'Pool member updated successfully',
+            data: poolMember,
+        };
+    }
 
     @ApiOperation({
         summary: 'Add Pool Member',

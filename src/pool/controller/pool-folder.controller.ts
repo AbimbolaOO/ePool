@@ -1,5 +1,4 @@
 import { AuthGuard } from 'src/guards/auth.guard';
-import { Serialize } from 'src/interceptors/resSerialize.interceptor';
 import { AuthenticatedRequest } from 'src/interface';
 
 import {
@@ -18,17 +17,17 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { CreatePoolFolderDto } from '../dto/create-pool-folder.dto';
-import { PoolFolderParamsDto } from '../dto/pool-folder-params.dto';
-import { PoolFolderQueryDto } from '../dto/pool-folder-query.dto';
-import { UpdatePoolFolderDto } from '../dto/update-pool-folder.dto';
-import { PoolService } from '../service/pool.service';
+import { CreatePoolFolderDto } from '../dto/request/create-pool-folder.dto';
+import { PoolFolderParamsDto } from '../dto/request/pool-folder-params.dto';
+import { PoolFolderQueryDto } from '../dto/request/pool-folder-query.dto';
+import { UpdatePoolFolderDto } from '../dto/request/update-pool-folder.dto';
+import { PoolFolderService } from '../service/pool-folder.service';
 
 @ApiTags('Pool Folder')
 @Controller('pool-folder')
 export class PoolFolderController {
     constructor(
-        private readonly poolService: PoolService,
+        private readonly poolFolderService: PoolFolderService,
     ) {}
 
     @ApiOperation({
@@ -45,7 +44,7 @@ export class PoolFolderController {
     ) {
         const userId = request.user.sub;
 
-        const poolFolder = await this.poolService.createPoolFolder(
+        const poolFolder = await this.poolFolderService.createPoolFolder(
             createPoolFolderDto,
             userId,
         );
@@ -68,7 +67,7 @@ export class PoolFolderController {
     async getPoolFolderById(@Param() params: PoolFolderParamsDto, @Req() request: AuthenticatedRequest) {
         const userId = request.user.sub;
 
-        const poolFolder = await this.poolService.getPoolFolderById(params.id, userId);
+        const poolFolder = await this.poolFolderService.getPoolFolderById(params.id, userId);
 
         return {
             statusCode: HttpStatus.OK,
@@ -88,7 +87,7 @@ export class PoolFolderController {
     async getUserPoolFolders(@Req() request: AuthenticatedRequest) {
         const userId = request.user.sub;
 
-        const poolFolders = await this.poolService.getUserPoolFolders(userId);
+        const poolFolders = await this.poolFolderService.getUserPoolFolders(userId);
 
         return {
             statusCode: HttpStatus.OK,
@@ -108,7 +107,7 @@ export class PoolFolderController {
     async getPoolFoldersByUser(@Req() request: AuthenticatedRequest) {
         const userId = request.user.sub;
 
-        const poolFolders = await this.poolService.getPoolFoldersByUser(userId);
+        const poolFolders = await this.poolFolderService.getPoolFoldersByUser(userId);
 
         return {
             statusCode: HttpStatus.OK,
@@ -127,7 +126,7 @@ export class PoolFolderController {
     @HttpCode(HttpStatus.OK)
     async getAllPoolFolders(@Query() poolFolderQueryDto: PoolFolderQueryDto, @Req() request: AuthenticatedRequest) {
         const userId = request.user.sub;
-        const result = await this.poolService.getAllPoolFolders(poolFolderQueryDto);
+        const result = await this.poolFolderService.getAllPoolFolders(poolFolderQueryDto);
 
         return {
             statusCode: HttpStatus.OK,
@@ -150,7 +149,7 @@ export class PoolFolderController {
         @Req() request: AuthenticatedRequest,
     ) {
         const userId = request.user.sub;
-        const poolFolder = await this.poolService.updatePoolFolder(
+        const poolFolder = await this.poolFolderService.updatePoolFolder(
             params.id,
             updatePoolFolderDto,
             userId,
@@ -176,7 +175,7 @@ export class PoolFolderController {
         @Req() request: AuthenticatedRequest,
     ) {
         const userId = request.user.sub;
-        await this.poolService.deletePoolFolder(params.id, userId);
+        await this.poolFolderService.deletePoolFolder(params.id, userId);
 
         return null;
     }

@@ -5,9 +5,9 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { ERROR_MESSAGES } from '../../enum/responses.enum';
-import { CreatePoolFileDto } from '../dto/create-pool-file.dto';
-import { PoolFileQueryDto } from '../dto/pool-file-query.dto';
-import { UpdatePoolFileDto } from '../dto/update-pool-file.dto';
+import { CreatePoolFileDto } from '../dto/request/create-pool-file.dto';
+import { PoolFileQueryDto } from '../dto/request/pool-file-query.dto';
+import { UpdatePoolFileDto } from '../dto/request/update-pool-file.dto';
 import { PoolFile } from '../entity/pool-file.entity';
 import { PoolFolder } from '../entity/pool-folder.entity';
 

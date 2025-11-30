@@ -18,7 +18,12 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { IJwtPayLoadData } from '../../interface';
-import { CreatePoolFileDto, PoolFileParamsDto, PoolFileQueryDto, UpdatePoolFileDto } from '../dto';
+import {
+    CreatePoolFileDto,
+    PoolFileParamsDto,
+    PoolFileQueryDto,
+    UpdatePoolFileDto,
+} from '../dto/request';
 import { PoolFileService } from '../service/pool-file.service';
 
 interface AuthenticatedRequest extends Request {

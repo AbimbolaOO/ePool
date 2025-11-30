@@ -5,10 +5,9 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { User } from '../../auth/entity/user.entity';
-import { ERROR_MESSAGES } from '../../enum/responses.enum';
-import { CreatePoolMemberDto } from '../dto/create-pool-member.dto';
-import { PoolMemberQueryDto } from '../dto/pool-member-query.dto';
-import { UpdatePoolMemberDto } from '../dto/update-pool-member.dto';
+import { CreatePoolMemberDto } from '../dto/request/create-pool-member.dto';
+import { PoolMemberQueryDto } from '../dto/request/pool-member-query.dto';
+import { UpdatePoolMemberDto } from '../dto/request/update-pool-member.dto';
 import { PoolFolder } from '../entity/pool-folder.entity';
 import { PoolMember } from '../entity/pool-member.entity';
 
@@ -22,6 +21,20 @@ export class PoolMemberService {
         @InjectRepository(User)
         private userRepository: Repository<User>,
     ) {}
+
+    async generateLinkForAddingMembers(id: string) {
+        const poolMember = await this.poolMemberRepository.findOne({
+            where: { id },
+            relations: ['poolFolder', 'poolFolder.owner', 'user'],
+        });
+
+        if (!poolMember) {
+            throw new NotFoundException('Pool member not found');
+        }
+
+        return poolMember;
+    }
+
 
     async createPoolMember(createPoolMemberDto: CreatePoolMemberDto, requestUserId: string) {
         const { poolFolderId, userId, isOwner } = createPoolMemberDto;
