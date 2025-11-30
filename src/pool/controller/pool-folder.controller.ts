@@ -1,5 +1,5 @@
-import { Request } from 'express';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { Serialize } from 'src/interceptors/resSerialize.interceptor';
 import { AuthenticatedRequest } from 'src/interface';
 
 import {
@@ -61,10 +61,14 @@ export class PoolFolderController {
         summary: 'Get Pool Folder by ID',
         description: 'Retrieve a specific pool folder by its ID'
     })
+    @ApiBearerAuth('JWT-auth')
+    @UseGuards(AuthGuard)
     @Get(':id')
     @HttpCode(HttpStatus.OK)
-    async getPoolFolderById(@Param() params: PoolFolderParamsDto) {
-        const poolFolder = await this.poolService.getPoolFolderById(params.id);
+    async getPoolFolderById(@Param() params: PoolFolderParamsDto, @Req() request: AuthenticatedRequest) {
+        const userId = request.user.sub;
+
+        const poolFolder = await this.poolService.getPoolFolderById(params.id, userId);
 
         return {
             statusCode: HttpStatus.OK,
@@ -117,9 +121,12 @@ export class PoolFolderController {
         summary: 'Get All Pool Folders',
         description: 'Get all pool folders with pagination'
     })
+    @ApiBearerAuth('JWT-auth')
+    @UseGuards(AuthGuard)
     @Get()
     @HttpCode(HttpStatus.OK)
-    async getAllPoolFolders(@Query() poolFolderQueryDto: PoolFolderQueryDto) {
+    async getAllPoolFolders(@Query() poolFolderQueryDto: PoolFolderQueryDto, @Req() request: AuthenticatedRequest) {
+        const userId = request.user.sub;
         const result = await this.poolService.getAllPoolFolders(poolFolderQueryDto);
 
         return {
@@ -143,7 +150,6 @@ export class PoolFolderController {
         @Req() request: AuthenticatedRequest,
     ) {
         const userId = request.user.sub;
-
         const poolFolder = await this.poolService.updatePoolFolder(
             params.id,
             updatePoolFolderDto,
@@ -170,7 +176,6 @@ export class PoolFolderController {
         @Req() request: AuthenticatedRequest,
     ) {
         const userId = request.user.sub;
-
         const result = await this.poolService.deletePoolFolder(params.id, userId);
 
         return {
