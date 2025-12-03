@@ -17,6 +17,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+import { AttachMemberToPoolViaLinkDto } from '../dto/request/attach-member-to-pool-via-link-dto';
 import { CreatePoolFolderDto } from '../dto/request/create-pool-folder.dto';
 import { PoolFolderParamsDto } from '../dto/request/pool-folder-params.dto';
 import { PoolFolderQueryDto } from '../dto/request/pool-folder-query.dto';
@@ -29,6 +30,50 @@ export class PoolFolderController {
     constructor(
         private readonly poolFolderService: PoolFolderService,
     ) {}
+
+    @ApiOperation({
+        summary: 'Generate pool folder connection link',
+        description: 'Generate a link that can be used to add members to a pool folder. Only the owner or members with owner privileges can generate this link.'
+    })
+    @ApiBearerAuth('JWT-auth')
+    @UseGuards(AuthGuard)
+    @Get('generate-link/:id')
+    @HttpCode(HttpStatus.OK)
+    async generateLinkForJoinPoolFolder(
+        @Param() params: PoolFolderParamsDto,
+        @Req() request: AuthenticatedRequest
+    ) {
+        const userId = request.user.sub;
+        const poolMember = await this.poolFolderService.generateLinkForJoinPoolFolder(userId, params.id);
+
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'Pool link generated successfully',
+            data: poolMember,
+        };
+    }
+
+    @ApiOperation({
+        summary: 'Attach member to pool via link',
+        description: 'Attach a member to a pool folder using a generated link code.'
+    })
+    @ApiBearerAuth('JWT-auth')
+    @UseGuards(AuthGuard)
+    @Post('join/:linkCode')
+    @HttpCode(HttpStatus.OK)
+    async attachAMemberToPoolViaLink(
+        @Req() request: AuthenticatedRequest,
+        @Param() params: AttachMemberToPoolViaLinkDto,
+    ) {
+        const userId = request.user.sub;
+        const poolMember = await this.poolFolderService.attachAMemberToPoolViaLink(userId, params.linkCode);
+
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'Member is successfully attached to the pool folder',
+            data: poolMember,
+        };
+    }
 
     @ApiOperation({
         summary: 'Create Pool Folder',

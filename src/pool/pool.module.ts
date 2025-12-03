@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { AuthModule } from '../auth/auth.module';
 import { User } from '../auth/entity/user.entity';
 import { PoolFileController } from './controller/pool-file.controller';
 import { PoolFolderController } from './controller/pool-folder.controller';
@@ -15,6 +16,7 @@ import { PoolMemberService } from './service/pool-member.service';
 
 @Module({
   imports: [
+    AuthModule,
     TypeOrmModule.forFeature([PoolFolder, PoolMember, PoolFile, User]),
     JwtModule.register({
       secret: process.env.JWT_SECRET,

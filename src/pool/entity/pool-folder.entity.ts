@@ -30,8 +30,14 @@ export class PoolFolder {
     @JoinColumn()
     file: PoolFile;
 
-    @Column({ length: 64 })
+    @Column({ length: 64, nullable: true, default: null })
     name: string;
+
+    @Column({ length: 4, nullable: true, default: null })
+    linkCode: string;
+
+    @CreateDateColumn()
+    linkGeneratedAt: Date;
 
     @CreateDateColumn()
     createdAt: Date;

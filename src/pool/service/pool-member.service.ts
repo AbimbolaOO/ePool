@@ -5,6 +5,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { User } from '../../auth/entity/user.entity';
+import { UserService } from '../../auth/service/user.service';
 import { CreatePoolMemberDto } from '../dto/request/create-pool-member.dto';
 import { PoolMemberQueryDto } from '../dto/request/pool-member-query.dto';
 import { UpdatePoolMemberDto } from '../dto/request/update-pool-member.dto';
@@ -18,31 +19,19 @@ export class PoolMemberService {
         private poolMemberRepository: Repository<PoolMember>,
         @InjectRepository(PoolFolder)
         private poolFolderRepository: Repository<PoolFolder>,
-        @InjectRepository(User)
-        private userRepository: Repository<User>,
+        private userService: UserService,
     ) {}
 
-    async generateLinkForAddingMembers(id: string) {
-        const poolMember = await this.poolMemberRepository.findOne({
-            where: { id },
-            relations: ['poolFolder', 'poolFolder.owner', 'user'],
-        });
-
-        if (!poolMember) {
-            throw new NotFoundException('Pool member not found');
-        }
-
-        return poolMember;
-    }
-
-
-    async createPoolMember(createPoolMemberDto: CreatePoolMemberDto, requestUserId: string) {
+    async createPoolMember(createPoolMemberDto: CreatePoolMemberDto, requestUserId: string, linkMode: boolean = false) {
         const { poolFolderId, userId, isOwner } = createPoolMemberDto;
 
         // Verify that the pool folder exists
         const poolFolder = await this.poolFolderRepository.findOne({
             where: { id: poolFolderId },
-            relations: ['owner', 'members', 'members.user'],
+            relations: ['owner',
+                // 'members',
+                // 'members.user'
+            ],
         });
 
         if (!poolFolder) {
@@ -51,22 +40,18 @@ export class PoolMemberService {
 
         // Check if requesting user is owner or member with owner privileges
         const isRequesterOwner = poolFolder.owner.id === requestUserId;
-        const isRequesterOwnerMember = poolFolder.members.some(
-            member => member.user.id === requestUserId && member.isOwner
-        );
+        // const isRequesterOwnerMember = poolFolder.members.some(
+        //     member => member.user.id === requestUserId && member.isOwner
+        // );
 
-        if (!isRequesterOwner && !isRequesterOwnerMember) {
+        if (!isRequesterOwner && !linkMode
+            // && !isRequesterOwnerMember
+        ) {
             throw new BadRequestException('You do not have permission to add members to this pool folder');
         }
 
         // Verify that the user to be added exists
-        const userToAdd = await this.userRepository.findOne({
-            where: { id: userId },
-        });
-
-        if (!userToAdd) {
-            throw new NotFoundException('User not found');
-        }
+        const userToAdd = await this.userService.getById(userId);
 
         // Check if user is already a member
         const existingMember = await this.poolMemberRepository.findOne({

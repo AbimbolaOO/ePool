@@ -1,7 +1,14 @@
 import { structurePaginatedData } from 'src/utils/helper/structurePaginatedData';
+import { generateLinkCode } from 'src/utils/utils';
 import { DataSource, Repository } from 'typeorm';
 
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    ForbiddenException,
+    Injectable,
+    NotFoundException,
+    UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { User } from '../../auth/entity/user.entity';
@@ -10,6 +17,7 @@ import { PoolFolderQueryDto } from '../dto/request/pool-folder-query.dto';
 import { UpdatePoolFolderDto } from '../dto/request/update-pool-folder.dto';
 import { PoolFolder } from '../entity/pool-folder.entity';
 import { PoolMember } from '../entity/pool-member.entity';
+import { PoolMemberService } from './pool-member.service';
 
 @Injectable()
 export class PoolFolderService {
@@ -19,7 +27,68 @@ export class PoolFolderService {
         @InjectRepository(PoolMember)
         private poolMemberRepository: Repository<PoolMember>,
         private dataSource: DataSource,
+        private poolMemberService: PoolMemberService,
     ) {}
+
+    async attachAMemberToPoolViaLink(userId: string, linkCode: string) {
+        const poolFolder = await this.poolFolderRepository.findOne({
+            where: { linkCode },
+            relations: ['owner']
+        });
+
+        if (!poolFolder) {
+            throw new NotFoundException('Pool folder not found');
+        }
+
+        if (userId && poolFolder) {
+            const isOwner = poolFolder.owner.id == userId;
+
+            if (isOwner) {
+                throw new UnprocessableEntityException('Owner cannot be added as a member to their own pool folder');
+            }
+        }
+
+        const poolMember: PoolMember = await this.poolMemberService.createPoolMember({
+            poolFolderId: poolFolder.id,
+            userId: userId,
+            isOwner: false,
+        },
+            userId,
+            true);
+
+        return poolMember;
+    }
+
+    async generateLinkForJoinPoolFolder(userId: string, poolFolderId: string) {
+        const poolFolder = await this.poolFolderRepository.findOne({
+            where: { id: poolFolderId },
+            relations: ['owner']
+        });
+
+        if (!poolFolder) {
+            throw new NotFoundException('Pool folder not found');
+        }
+
+        const isOwner = poolFolder.owner.id === userId;
+
+        if (!isOwner) {
+            throw new ForbiddenException('You do not have permission to generate a link for this pool folder');
+        }
+
+        const linkCode = await this.generateUniqueLinkCode();
+
+        poolFolder.linkCode = linkCode;
+        poolFolder.linkGeneratedAt = new Date();
+        await this.poolFolderRepository.save(poolFolder);
+
+        return {
+            linkCode,
+            poolFolderId: poolFolder.id,
+            poolFolderName: poolFolder.name,
+            generatedAt: new Date(),
+            inviteLink: `${process.env.BASE_URL}/join/${linkCode}`
+        };
+    }
 
     async createPoolFolder(data: CreatePoolFolderDto, userId?: string) {
         const queryRunner = this.dataSource.createQueryRunner();
@@ -136,5 +205,22 @@ export class PoolFolderService {
         });
 
         return structurePaginatedData(poolFolders, total, page, limit);
+    }
+
+    private async generateUniqueLinkCode(): Promise<string> {
+        let linkCode: string;
+        let isUnique = false;
+
+        while (!isUnique) {
+            linkCode = generateLinkCode(4);
+            const existingFolder = await this.poolFolderRepository.findOne({
+                where: { linkCode }
+            });
+            if (!existingFolder) {
+                isUnique = true;
+            }
+        }
+
+        return linkCode;
     }
 }
