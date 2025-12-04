@@ -1,16 +1,10 @@
 import { plainToInstance } from 'class-transformer';
 import { map, Observable } from 'rxjs';
-import { IJwtPayLoadData } from 'src/interface';
 
-import {
-  CallHandler,
-  ExecutionContext,
-  NestInterceptor,
-  UseInterceptors,
-} from '@nestjs/common';
+import { CallHandler, ExecutionContext, NestInterceptor, UseInterceptors } from '@nestjs/common';
 
 interface ClassConstructor {
-  new (...args: any[]): {};
+  new(...args: any[]): {};
 }
 
 interface ResponseData {

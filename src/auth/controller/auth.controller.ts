@@ -1,4 +1,5 @@
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from 'src/enum/responses.enum';
+import { Serialize } from 'src/interceptors/resSerialize.interceptor';
 import { generateOTP } from 'src/utils/utils';
 
 import {
@@ -17,6 +18,7 @@ import { genPasswdResetOtpDto } from '../dto/gen-passwd-reset-otp.dto';
 import { PasswordResetDto } from '../dto/password-reset.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { ResendUserSignUpOtpDto } from '../dto/resend-user-signup-otp.dto';
+import { SignInResponseDto } from '../dto/signin-response.dto';
 import { SignInUserDto } from '../dto/signin-user.dto';
 import { SignupUserDto } from '../dto/signup-user.dto';
 import { VerifyPasswordResetOtpDto } from '../dto/verify-password-reset-otp.dto';
@@ -94,6 +96,7 @@ export class AuthController {
     summary: 'User Sign In',
     description: 'Authenticate user with email and password',
   })
+  @Serialize(SignInResponseDto)
   @Post('signin')
   @HttpCode(HttpStatus.OK)
   async signIn(@Body() body: SignInUserDto) {

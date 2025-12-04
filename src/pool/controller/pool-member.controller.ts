@@ -1,4 +1,5 @@
 import { AuthGuard } from 'src/guards/auth.guard';
+import { Serialize } from 'src/interceptors/resSerialize.interceptor';
 
 import {
   Body,
@@ -23,6 +24,7 @@ import {
   PoolMemberQueryDto,
   UpdatePoolMemberDto,
 } from '../dto/request';
+import { PoolMembersResponseDto } from '../dto/response';
 import { PoolMemberService } from '../service/pool-member.service';
 
 @ApiTags('Pool Member')
@@ -82,6 +84,7 @@ export class PoolMemberController {
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
+    @Serialize(PoolMembersResponseDto)
     @Get('folder/:poolFolderId')
     @HttpCode(HttpStatus.OK)
     async getPoolMembersByFolder(
@@ -109,6 +112,7 @@ export class PoolMemberController {
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
+    @Serialize(PoolMembersResponseDto)
     @Get('user/memberships')
     @HttpCode(HttpStatus.OK)
     async getUserPoolMemberships(
