@@ -111,7 +111,7 @@ export class PoolMemberService {
         return poolMember;
     }
 
-    async getPoolMembersByFolder(poolFolderId: string, userId: string) {
+    async getPoolMembersByFolder(poolFolderId: string, userId: string, poolMemberQueryDto: PoolMemberQueryDto) {
         const poolFolder = await this.poolFolderRepository.findOne({
             where: { id: poolFolderId },
             relations: ['owner', 'members', 'members.user'],
@@ -132,23 +132,35 @@ export class PoolMemberService {
             );
         }
 
-        const poolMembers = await this.poolMemberRepository.find({
+        const { perPage: limit, page } = poolMemberQueryDto;
+        const offset = page - 1;
+        const skip = offset ? offset * limit : 0;
+
+        const [poolMembers, total] = await this.poolMemberRepository.findAndCount({
             where: { poolFolder: { id: poolFolderId } },
             relations: ['user', 'poolFolder'],
+            skip,
+            take: limit,
             order: { createdAt: 'ASC' },
         });
 
-        return poolMembers;
+        return structurePaginatedData(poolMembers, total, page, limit);
     }
 
-    async getUserPoolMemberships(userId: string) {
-        const poolMemberships = await this.poolMemberRepository.find({
+    async getUserPoolMemberships(userId: string, poolMemberQueryDto: PoolMemberQueryDto) {
+        const { perPage: limit, page } = poolMemberQueryDto;
+        const offset = page - 1;
+        const skip = offset ? offset * limit : 0;
+
+        const [poolMemberships, total] = await this.poolMemberRepository.findAndCount({
             where: { user: { id: userId } },
             relations: ['poolFolder', 'poolFolder.owner'],
+            skip,
+            take: limit,
             order: { createdAt: 'DESC' },
         });
 
-        return poolMemberships;
+        return structurePaginatedData(poolMemberships, total, page, limit);
     }
 
     async updatePoolMember(

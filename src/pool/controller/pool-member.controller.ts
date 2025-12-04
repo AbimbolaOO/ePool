@@ -16,7 +16,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { AuthenticatedRequest, IJwtPayLoadData } from '../../interface';
+import { AuthenticatedRequest } from '../../interface';
 import {
   CreatePoolMemberDto,
   PoolMemberParamsDto,
@@ -78,7 +78,7 @@ export class PoolMemberController {
     @ApiOperation({
         summary: 'Get Pool Members by Folder',
         description:
-            'Get all members of a specific pool folder. User must be owner or member of the folder.',
+            'Get all members of a specific pool folder with pagination. User must be owner or member of the folder.',
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
@@ -87,39 +87,42 @@ export class PoolMemberController {
     async getPoolMembersByFolder(
         @Param('poolFolderId') poolFolderId: string,
         @Req() request: AuthenticatedRequest,
+        @Query() poolMemberQueryDto: PoolMemberQueryDto,
     ) {
         const userId = request.user.sub;
-
-        const poolMembers = await this.poolMemberService.getPoolMembersByFolder(
+        const result = await this.poolMemberService.getPoolMembersByFolder(
             poolFolderId,
             userId,
+            poolMemberQueryDto,
         );
 
         return {
             statusCode: HttpStatus.OK,
             message: 'Pool members retrieved successfully',
-            data: poolMembers,
+            data: result,
         };
     }
 
     @ApiOperation({
         summary: 'Get User Pool Memberships',
-        description: 'Get all pool memberships for the authenticated user',
+        description: 'Get all pool memberships for the authenticated user with pagination',
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
     @Get('user/memberships')
     @HttpCode(HttpStatus.OK)
-    async getUserPoolMemberships(@Req() request: AuthenticatedRequest) {
+    async getUserPoolMemberships(
+        @Req() request: AuthenticatedRequest,
+        @Query() poolMemberQueryDto: PoolMemberQueryDto,
+    ) {
         const userId = request.user.sub;
-
-        const poolMemberships =
-            await this.poolMemberService.getUserPoolMemberships(userId);
+        const result =
+            await this.poolMemberService.getUserPoolMemberships(userId, poolMemberQueryDto);
 
         return {
             statusCode: HttpStatus.OK,
             message: 'User pool memberships retrieved successfully',
-            data: poolMemberships,
+            data: result,
         };
     }
 

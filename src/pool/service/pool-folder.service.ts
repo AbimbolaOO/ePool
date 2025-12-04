@@ -152,20 +152,36 @@ export class PoolFolderService {
     return poolFolder;
   }
 
-  async getUserPoolFolders(userId: string) {
-    return this.poolFolderRepository.find({
+  async getUserPoolFolders(userId: string, poolFolderQueryDto: PoolFolderQueryDto) {
+    const { perPage: limit, page } = poolFolderQueryDto;
+    const offset = page - 1;
+    const skip = offset ? offset * limit : 0;
+
+    const [poolFolders, total] = await this.poolFolderRepository.findAndCount({
       where: { owner: { id: userId } },
       // relations: ['owner', 'members', 'members.user', 'file'],
+      skip,
+      take: limit,
       order: { createdAt: 'DESC' },
     });
+
+    return structurePaginatedData(poolFolders, total, page, limit);
   }
 
-  async getPoolFoldersByUser(userId: string) {
-    return this.poolMemberRepository.find({
+  async getPoolFoldersByUser(userId: string, poolFolderQueryDto: PoolFolderQueryDto) {
+    const { perPage: limit, page } = poolFolderQueryDto;
+    const offset = page - 1;
+    const skip = offset ? offset * limit : 0;
+
+    const [poolMembers, total] = await this.poolMemberRepository.findAndCount({
       where: { user: { id: userId } },
       // relations: ['poolFolder', 'poolFolder.owner', 'poolFolder.file', 'user'],
+      skip,
+      take: limit,
       order: { createdAt: 'DESC' },
     });
+
+    return structurePaginatedData(poolMembers, total, page, limit);
   }
 
   async updatePoolFolder(

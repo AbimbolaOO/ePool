@@ -137,43 +137,49 @@ export class PoolFolderController {
 
   @ApiOperation({
     summary: 'Get User Pool Folders',
-    description: 'Get all pool folders owned by the authenticated user',
+    description: 'Get all pool folders owned by the authenticated user with pagination',
   })
   @ApiBearerAuth('JWT-auth')
   @UseGuards(AuthGuard)
   @Get('user/owned')
   @HttpCode(HttpStatus.OK)
-  async getUserPoolFolders(@Req() request: AuthenticatedRequest) {
+  async getUserPoolFolders(
+    @Req() request: AuthenticatedRequest,
+    @Query() poolFolderQueryDto: PoolFolderQueryDto,
+  ) {
     const userId = request.user.sub;
 
-    const poolFolders = await this.poolFolderService.getUserPoolFolders(userId);
+    const result = await this.poolFolderService.getUserPoolFolders(userId, poolFolderQueryDto);
 
     return {
       statusCode: HttpStatus.OK,
       message: 'User pool folders retrieved successfully',
-      data: poolFolders,
+      data: result,
     };
   }
 
   @ApiOperation({
     summary: 'Get Pool Folders Where User is Member',
     description:
-      'Get all pool folders where the authenticated user is a member',
+      'Get all pool folders where the authenticated user is a member with pagination',
   })
   @ApiBearerAuth('JWT-auth')
   @UseGuards(AuthGuard)
   @Get('user/member')
   @HttpCode(HttpStatus.OK)
-  async getPoolFoldersByUser(@Req() request: AuthenticatedRequest) {
+  async getPoolFoldersByUser(
+    @Req() request: AuthenticatedRequest,
+    @Query() poolFolderQueryDto: PoolFolderQueryDto,
+  ) {
     const userId = request.user.sub;
 
-    const poolFolders =
-      await this.poolFolderService.getPoolFoldersByUser(userId);
+    const result =
+      await this.poolFolderService.getPoolFoldersByUser(userId, poolFolderQueryDto);
 
     return {
       statusCode: HttpStatus.OK,
       message: 'Pool folders retrieved successfully',
-      data: poolFolders,
+      data: result,
     };
   }
 
