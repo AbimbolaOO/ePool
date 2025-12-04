@@ -1,5 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { map, Observable } from 'rxjs';
+import { IJwtPayLoadData } from 'src/interface';
 
 import {
   CallHandler,

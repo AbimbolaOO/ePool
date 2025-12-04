@@ -1,40 +1,45 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    OneToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 import { PoolFolder } from './pool-folder.entity';
 
-@Entity("pool_file")
+@Entity('pool_file')
 export class PoolFile {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column()
-    filename: string;
+  @Column()
+  filename: string;
 
-    @Column()
-    url: string;
+  @Column()
+  url: string;
 
-    @Column()
-    size: number;
+  @Column()
+  size: number;
 
-    @Column()
-    aspectRatio: number;
+  @Column()
+  aspectRatioW: number;
 
-    @Column()
-    mimetype: string;
+  @Column()
+  aspectRatioH: number;
 
-    @OneToOne(() => PoolFolder, poolFolder => poolFolder.file, { onDelete: 'CASCADE' })
-    poolFolder: PoolFolder;
+  @Column()
+  mimetype: string;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @OneToOne(() => PoolFolder, (poolFolder) => poolFolder.file, {
+    onDelete: 'CASCADE',
+  })
+  poolFolder: PoolFolder;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

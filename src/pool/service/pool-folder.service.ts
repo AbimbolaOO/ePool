@@ -3,11 +3,11 @@ import { generateLinkCode } from 'src/utils/utils';
 import { DataSource, Repository } from 'typeorm';
 
 import {
-    BadRequestException,
-    ForbiddenException,
-    Injectable,
-    NotFoundException,
-    UnprocessableEntityException,
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -21,206 +21,235 @@ import { PoolMemberService } from './pool-member.service';
 
 @Injectable()
 export class PoolFolderService {
-    constructor(
-        @InjectRepository(PoolFolder)
-        private poolFolderRepository: Repository<PoolFolder>,
-        @InjectRepository(PoolMember)
-        private poolMemberRepository: Repository<PoolMember>,
-        private dataSource: DataSource,
-        private poolMemberService: PoolMemberService,
-    ) {}
+  constructor(
+    @InjectRepository(PoolFolder)
+    private poolFolderRepository: Repository<PoolFolder>,
+    @InjectRepository(PoolMember)
+    private poolMemberRepository: Repository<PoolMember>,
+    private dataSource: DataSource,
+    private poolMemberService: PoolMemberService,
+  ) {}
 
-    async attachAMemberToPoolViaLink(userId: string, linkCode: string) {
-        const poolFolder = await this.poolFolderRepository.findOne({
-            where: { linkCode },
-            relations: ['owner']
-        });
+  async attachAMemberToPoolViaLink(userId: string, linkCode: string) {
+    const poolFolder = await this.poolFolderRepository.findOne({
+      where: { linkCode },
+      relations: ['owner'],
+    });
 
-        if (!poolFolder) {
-            throw new NotFoundException('Pool folder not found');
-        }
+    if (!poolFolder) {
+      throw new NotFoundException('Pool folder not found');
+    }
 
-        if (userId && poolFolder) {
-            const isOwner = poolFolder.owner.id == userId;
+    if (userId && poolFolder) {
+      const isOwner = poolFolder.owner.id == userId;
 
-            if (isOwner) {
-                throw new UnprocessableEntityException('Owner cannot be added as a member to their own pool folder');
-            }
-        }
+      if (isOwner) {
+        throw new UnprocessableEntityException(
+          'Owner cannot be added as a member to their own pool folder',
+        );
+      }
+    }
 
-        const poolMember: PoolMember = await this.poolMemberService.createPoolMember({
-            poolFolderId: poolFolder.id,
-            userId: userId,
-            isOwner: false,
+    const poolMember: PoolMember =
+      await this.poolMemberService.createPoolMember(
+        {
+          poolFolderId: poolFolder.id,
+          userId: userId,
+          isOwner: false,
         },
-            userId,
-            true);
+        userId,
+        true,
+      );
 
-        return poolMember;
+    return poolMember;
+  }
+
+  async generateLinkForJoinPoolFolder(userId: string, poolFolderId: string) {
+    const poolFolder = await this.poolFolderRepository.findOne({
+      where: { id: poolFolderId },
+      relations: ['owner'],
+    });
+
+    if (!poolFolder) {
+      throw new NotFoundException('Pool folder not found');
     }
 
-    async generateLinkForJoinPoolFolder(userId: string, poolFolderId: string) {
-        const poolFolder = await this.poolFolderRepository.findOne({
-            where: { id: poolFolderId },
-            relations: ['owner']
-        });
+    const isOwner = poolFolder.owner.id === userId;
 
-        if (!poolFolder) {
-            throw new NotFoundException('Pool folder not found');
-        }
-
-        const isOwner = poolFolder.owner.id === userId;
-
-        if (!isOwner) {
-            throw new ForbiddenException('You do not have permission to generate a link for this pool folder');
-        }
-
-        const linkCode = await this.generateUniqueLinkCode();
-
-        poolFolder.linkCode = linkCode;
-        poolFolder.linkGeneratedAt = new Date();
-        await this.poolFolderRepository.save(poolFolder);
-
-        return {
-            linkCode,
-            poolFolderId: poolFolder.id,
-            poolFolderName: poolFolder.name,
-            generatedAt: new Date(),
-            inviteLink: `${process.env.BASE_URL}/join/${linkCode}`
-        };
+    if (!isOwner) {
+      throw new ForbiddenException(
+        'You do not have permission to generate a link for this pool folder',
+      );
     }
 
-    async createPoolFolder(data: CreatePoolFolderDto, userId?: string) {
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
+    const linkCode = await this.generateUniqueLinkCode();
 
-        try {
-            let owner: User;
-            owner = await queryRunner.manager.findOne(User, {
-                where: { id: userId }
-            });
-            if (!owner) {
-                throw new NotFoundException('User not found');
-            }
-            const poolFolder = queryRunner.manager.create(PoolFolder, { name: data.name, owner: owner });
-            const savedPoolFolder = await queryRunner.manager.save(PoolFolder, poolFolder);
+    poolFolder.linkCode = linkCode;
+    poolFolder.linkGeneratedAt = new Date();
+    await this.poolFolderRepository.save(poolFolder);
 
-            const poolMember = queryRunner.manager.create(PoolMember, {
-                poolFolder: savedPoolFolder,
-                user: owner,
-                isOwner: true,
-                invitedAt: new Date(),
-            });
+    return {
+      linkCode,
+      poolFolderId: poolFolder.id,
+      poolFolderName: poolFolder.name,
+      generatedAt: new Date(),
+      inviteLink: `${process.env.BASE_URL}/join/${linkCode}`,
+    };
+  }
 
-            await queryRunner.manager.save(PoolMember, poolMember);
+  async createPoolFolder(data: CreatePoolFolderDto, userId?: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-            await queryRunner.commitTransaction();
+    try {
+      let owner: User;
+      owner = await queryRunner.manager.findOne(User, {
+        where: { id: userId },
+      });
+      if (!owner) {
+        throw new NotFoundException('User not found');
+      }
+      const poolFolder = queryRunner.manager.create(PoolFolder, {
+        name: data.name,
+        owner: owner,
+      });
+      const savedPoolFolder = await queryRunner.manager.save(
+        PoolFolder,
+        poolFolder,
+      );
 
-            return this.getPoolFolderById(savedPoolFolder.id, userId);
+      const poolMember = queryRunner.manager.create(PoolMember, {
+        poolFolder: savedPoolFolder,
+        user: owner,
+        isOwner: true,
+        invitedAt: new Date(),
+      });
 
-        } catch (error) {
-            await queryRunner.rollbackTransaction();
-            throw error;
-        } finally {
-            await queryRunner.release();
-        }
+      await queryRunner.manager.save(PoolMember, poolMember);
+
+      await queryRunner.commitTransaction();
+
+      return this.getPoolFolderById(savedPoolFolder.id, userId);
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async getPoolFolderById(id: string, userId: string) {
+    const poolFolder = await this.poolFolderRepository.findOne({
+      where: { id, owner: { id: userId } },
+      // relations: ['owner', 'members', 'file'],
+    });
+
+    if (!poolFolder) {
+      throw new NotFoundException('Pool folder not found');
     }
 
-    async getPoolFolderById(id: string, userId: string) {
-        const poolFolder = await this.poolFolderRepository.findOne({
-            where: { id, owner: { id: userId } },
-            // relations: ['owner', 'members', 'file'],
-        });
+    return poolFolder;
+  }
 
-        if (!poolFolder) {
-            throw new NotFoundException('Pool folder not found');
-        }
+  async getUserPoolFolders(userId: string) {
+    return this.poolFolderRepository.find({
+      where: { owner: { id: userId } },
+      // relations: ['owner', 'members', 'members.user', 'file'],
+      order: { createdAt: 'DESC' },
+    });
+  }
 
-        return poolFolder;
+  async getPoolFoldersByUser(userId: string) {
+    return this.poolMemberRepository.find({
+      where: { user: { id: userId } },
+      // relations: ['poolFolder', 'poolFolder.owner', 'poolFolder.file', 'user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async updatePoolFolder(
+    id: string,
+    updatePoolFolderDto: UpdatePoolFolderDto,
+    userId?: string,
+  ) {
+    console.log('Updating pool folder:', id, updatePoolFolderDto);
+    const poolFolder = await this.poolFolderRepository.findOne({
+      where: { id, owner: { id: userId } },
+      relations: ['owner'],
+    });
+
+    if (!poolFolder) {
+      throw new NotFoundException('Pool folder not found');
     }
 
-    async getUserPoolFolders(userId: string) {
-        return this.poolFolderRepository.find({
-            where: { owner: { id: userId } },
-            // relations: ['owner', 'members', 'members.user', 'file'],
-            order: { createdAt: 'DESC' },
-        });
+    if (userId && poolFolder?.owner?.id !== userId) {
+      throw new BadRequestException(
+        'You do not have permission to update this pool folder',
+      );
     }
 
-    async getPoolFoldersByUser(userId: string) {
-        return this.poolMemberRepository.find({
-            where: { user: { id: userId } },
-            // relations: ['poolFolder', 'poolFolder.owner', 'poolFolder.file', 'user'],
-            order: { createdAt: 'DESC' },
-        });
+    Object.assign(poolFolder, updatePoolFolderDto);
+
+    await this.poolFolderRepository.save(poolFolder);
+
+    return updatePoolFolderDto;
+  }
+
+  async deletePoolFolder(id: string, userId?: string) {
+    const poolFolder = await this.poolFolderRepository.findOne({
+      where: { id, owner: { id: userId } },
+      relations: ['owner'],
+    });
+
+    if (!poolFolder) {
+      throw new NotFoundException('Pool folder not found');
     }
 
-    async updatePoolFolder(id: string, updatePoolFolderDto: UpdatePoolFolderDto, userId?: string) {
-        console.log('Updating pool folder:', id, updatePoolFolderDto);
-        const poolFolder = await this.poolFolderRepository.findOne({ where: { id, owner: { id: userId } }, relations: ['owner'] });
-
-        if (!poolFolder) {
-            throw new NotFoundException('Pool folder not found');
-        }
-
-        if (userId && poolFolder?.owner?.id !== userId) {
-            throw new BadRequestException('You do not have permission to update this pool folder');
-        }
-
-        Object.assign(poolFolder, updatePoolFolderDto);
-
-        await this.poolFolderRepository.save(poolFolder);
-
-        return updatePoolFolderDto;
+    if (userId && poolFolder.owner.id !== userId) {
+      throw new BadRequestException(
+        'You do not have permission to delete this pool folder',
+      );
     }
 
-    async deletePoolFolder(id: string, userId?: string) {
-        const poolFolder = await this.poolFolderRepository.findOne({ where: { id, owner: { id: userId } }, relations: ['owner'] });
+    await this.poolFolderRepository.delete(poolFolder.id);
 
-        if (!poolFolder) {
-            throw new NotFoundException('Pool folder not found');
-        }
+    return { message: 'Pool folder deleted successfully' };
+  }
 
-        if (userId && poolFolder.owner.id !== userId) {
-            throw new BadRequestException('You do not have permission to delete this pool folder');
-        }
+  async getAllPoolFolders(
+    poolFolderQueryDto: PoolFolderQueryDto,
+    userId?: string,
+  ) {
+    const { perPage: limit, page } = poolFolderQueryDto;
+    const offset = page - 1;
+    const skip = offset ? offset * limit : 0;
 
-        await this.poolFolderRepository.delete(poolFolder.id);
+    const [poolFolders, total] = await this.poolFolderRepository.findAndCount({
+      where: { owner: { id: userId } },
+      // relations: ['owner', 'members', 'file'],
+      order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
+    });
 
-        return { message: 'Pool folder deleted successfully' };
+    return structurePaginatedData(poolFolders, total, page, limit);
+  }
+
+  private async generateUniqueLinkCode(): Promise<string> {
+    let linkCode: string;
+    let isUnique = false;
+
+    while (!isUnique) {
+      linkCode = generateLinkCode(4);
+      const existingFolder = await this.poolFolderRepository.findOne({
+        where: { linkCode },
+      });
+      if (!existingFolder) {
+        isUnique = true;
+      }
     }
 
-    async getAllPoolFolders(poolFolderQueryDto: PoolFolderQueryDto, userId?: string) {
-        const { perPage: limit, page } = poolFolderQueryDto;
-        const offset = page - 1;
-        const skip = offset ? offset * limit : 0;
-
-        const [poolFolders, total] = await this.poolFolderRepository.findAndCount({
-            where: { owner: { id: userId } },
-            // relations: ['owner', 'members', 'file'],
-            order: { createdAt: 'DESC' },
-            skip,
-            take: limit,
-        });
-
-        return structurePaginatedData(poolFolders, total, page, limit);
-    }
-
-    private async generateUniqueLinkCode(): Promise<string> {
-        let linkCode: string;
-        let isUnique = false;
-
-        while (!isUnique) {
-            linkCode = generateLinkCode(4);
-            const existingFolder = await this.poolFolderRepository.findOne({
-                where: { linkCode }
-            });
-            if (!existingFolder) {
-                isUnique = true;
-            }
-        }
-
-        return linkCode;
-    }
+    return linkCode;
+  }
 }

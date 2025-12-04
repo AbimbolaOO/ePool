@@ -15,7 +15,8 @@ export class PasswordResetDto {
   email: string;
 
   @ApiProperty({
-    description: 'New strong password with at least 8 characters, including uppercase, lowercase, number, and special character',
+    description:
+      'New strong password with at least 8 characters, including uppercase, lowercase, number, and special character',
     example: 'NewWhyte@123',
     minLength: 8,
     required: true,

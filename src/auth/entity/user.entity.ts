@@ -44,14 +44,10 @@ export class User {
   @Column({ default: false })
   isDeactivated: boolean;
 
-  @OneToMany(
-    (type) => PoolFolder,
-    (poolFolder) => poolFolder.owner,
-    {
-      onDelete: 'CASCADE',
-      // cascade: true, // ['insert']
-    },
-  )
+  @OneToMany((type) => PoolFolder, (poolFolder) => poolFolder.owner, {
+    onDelete: 'CASCADE',
+    // cascade: true, // ['insert']
+  })
   poolFolders: PoolFolder[];
 
   @CreateDateColumn()

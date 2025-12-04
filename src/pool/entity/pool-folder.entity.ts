@@ -1,47 +1,51 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    OneToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 import { User } from '../../auth/entity/user.entity';
 import { PoolFile } from './pool-file.entity';
 import { PoolMember } from './pool-member.entity';
 
-@Entity("pool_folder")
+@Entity('pool_folder')
 export class PoolFolder {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @ManyToOne(() => User, user => user.poolFolders, { onDelete: 'CASCADE' })
-    @JoinColumn()
-    owner: User;
+  @ManyToOne(() => User, (user) => user.poolFolders, { onDelete: 'CASCADE' })
+  @JoinColumn()
+  owner: User;
 
-    @OneToMany(() => PoolMember, poolMember => poolMember.poolFolder, { cascade: true })
-    members: PoolMember[];
+  @OneToMany(() => PoolMember, (poolMember) => poolMember.poolFolder, {
+    cascade: true,
+  })
+  members: PoolMember[];
 
-    @OneToOne(() => PoolFile, poolFile => poolFile.poolFolder, { cascade: true })
-    @JoinColumn()
-    file: PoolFile;
+  @OneToOne(() => PoolFile, (poolFile) => poolFile.poolFolder, {
+    cascade: true,
+  })
+  @JoinColumn()
+  file: PoolFile;
 
-    @Column({ length: 64, nullable: true, default: null })
-    name: string;
+  @Column({ length: 64, nullable: true, default: null })
+  name: string;
 
-    @Column({ length: 4, nullable: true, default: null })
-    linkCode: string;
+  @Column({ length: 4, nullable: true, default: null })
+  linkCode: string;
 
-    @CreateDateColumn()
-    linkGeneratedAt: Date;
+  @CreateDateColumn()
+  linkGeneratedAt: Date;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

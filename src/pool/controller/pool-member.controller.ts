@@ -1,46 +1,39 @@
-import { Request } from 'express';
 import { AuthGuard } from 'src/guards/auth.guard';
 
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    HttpCode,
-    HttpStatus,
-    Param,
-    Patch,
-    Post,
-    Query,
-    Req,
-    UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { IJwtPayLoadData } from '../../interface';
+import { AuthenticatedRequest, IJwtPayLoadData } from '../../interface';
 import {
-    CreatePoolMemberDto,
-    PoolMemberParamsDto,
-    PoolMemberQueryDto,
-    UpdatePoolMemberDto,
+  CreatePoolMemberDto,
+  PoolMemberParamsDto,
+  PoolMemberQueryDto,
+  UpdatePoolMemberDto,
 } from '../dto/request';
 import { PoolMemberService } from '../service/pool-member.service';
-
-interface AuthenticatedRequest extends Request {
-    user: IJwtPayLoadData;
-}
 
 @ApiTags('Pool Member')
 @Controller('pool-member')
 export class PoolMemberController {
-    constructor(
-        private readonly poolMemberService: PoolMemberService,
-    ) {}
-
+    constructor(private readonly poolMemberService: PoolMemberService) {}
 
     @ApiOperation({
         summary: 'Add Pool Member',
-        description: 'Add a member to a pool folder. Only the owner or members with owner privileges can add new members.'
+        description:
+            'Add a member to a pool folder. Only the owner or members with owner privileges can add new members.',
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
@@ -66,12 +59,14 @@ export class PoolMemberController {
 
     @ApiOperation({
         summary: 'Get Pool Member by ID',
-        description: 'Retrieve a specific pool member by its ID'
+        description: 'Retrieve a specific pool member by its ID',
     })
     @Get(':id')
     @HttpCode(HttpStatus.OK)
     async getPoolMemberById(@Param() params: PoolMemberParamsDto) {
-        const poolMember = await this.poolMemberService.getPoolMemberById(params.id);
+        const poolMember = await this.poolMemberService.getPoolMemberById(
+            params.id,
+        );
 
         return {
             statusCode: HttpStatus.OK,
@@ -82,7 +77,8 @@ export class PoolMemberController {
 
     @ApiOperation({
         summary: 'Get Pool Members by Folder',
-        description: 'Get all members of a specific pool folder. User must be owner or member of the folder.'
+        description:
+            'Get all members of a specific pool folder. User must be owner or member of the folder.',
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
@@ -108,7 +104,7 @@ export class PoolMemberController {
 
     @ApiOperation({
         summary: 'Get User Pool Memberships',
-        description: 'Get all pool memberships for the authenticated user'
+        description: 'Get all pool memberships for the authenticated user',
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
@@ -117,7 +113,8 @@ export class PoolMemberController {
     async getUserPoolMemberships(@Req() request: AuthenticatedRequest) {
         const userId = request.user.sub;
 
-        const poolMemberships = await this.poolMemberService.getUserPoolMemberships(userId);
+        const poolMemberships =
+            await this.poolMemberService.getUserPoolMemberships(userId);
 
         return {
             statusCode: HttpStatus.OK,
@@ -128,12 +125,13 @@ export class PoolMemberController {
 
     @ApiOperation({
         summary: 'Get All Pool Members',
-        description: 'Get all pool members with pagination'
+        description: 'Get all pool members with pagination',
     })
     @Get()
     @HttpCode(HttpStatus.OK)
     async getAllPoolMembers(@Query() poolMemberQueryDto: PoolMemberQueryDto) {
-        const result = await this.poolMemberService.getAllPoolMembers(poolMemberQueryDto);
+        const result =
+            await this.poolMemberService.getAllPoolMembers(poolMemberQueryDto);
 
         return {
             statusCode: HttpStatus.OK,
@@ -144,7 +142,8 @@ export class PoolMemberController {
 
     @ApiOperation({
         summary: 'Update Pool Member',
-        description: 'Update a pool member. Only the owner or members with owner privileges can update.'
+        description:
+            'Update a pool member. Only the owner or members with owner privileges can update.',
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
@@ -172,7 +171,8 @@ export class PoolMemberController {
 
     @ApiOperation({
         summary: 'Remove Pool Member',
-        description: 'Remove a member from a pool folder. Only the owner, members with owner privileges, or the member themselves can do this.'
+        description:
+            'Remove a member from a pool folder. Only the owner, members with owner privileges, or the member themselves can do this.',
     })
     @ApiBearerAuth('JWT-auth')
     @UseGuards(AuthGuard)
@@ -184,7 +184,10 @@ export class PoolMemberController {
     ) {
         const userId = request.user.sub;
 
-        const result = await this.poolMemberService.deletePoolMember(params.id, userId);
+        const result = await this.poolMemberService.deletePoolMember(
+            params.id,
+            userId,
+        );
 
         return {
             statusCode: HttpStatus.OK,

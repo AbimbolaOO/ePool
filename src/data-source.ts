@@ -17,15 +17,10 @@ export const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DATABASE,
   ssl: process.env.POSTGRES_SSLMODE
     ? {
-      rejectUnauthorized: false,
-    }
+        rejectUnauthorized: false,
+      }
     : false,
-  entities: [
-    User,
-    PoolMember,
-    PoolFolder,
-    PoolFile,
-  ],
+  entities: [User, PoolMember, PoolFolder, PoolFile],
   migrationsTableName: 'migration',
   migrations: [__dirname + '/migrations/*.ts'],
   synchronize: false,

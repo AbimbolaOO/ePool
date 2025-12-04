@@ -32,13 +32,15 @@ export class SMSTemplates {
   }
 
   static sendDeleteUserSMS(otp: string, name: string) {
-    return `Hi ${name || ''
-      },\nWe the ePool team are so sorry to see you exit our platform. Here is the pin required to complete this process. ${otp}. It is valid for the next 10 minutes.`;
+    return `Hi ${
+      name || ''
+    },\nWe the ePool team are so sorry to see you exit our platform. Here is the pin required to complete this process. ${otp}. It is valid for the next 10 minutes.`;
   }
 
   static sendResetUsernameSMS(otp: string, name: string) {
-    return `Hi ${name || ''
-      },\nWe are happy to see you reset your username. Here is the pin required to complete this process ${otp}. It is valid for the next 10 minutes.`;
+    return `Hi ${
+      name || ''
+    },\nWe are happy to see you reset your username. Here is the pin required to complete this process ${otp}. It is valid for the next 10 minutes.`;
   }
 
   static sendPhoneNumberVerificationSMS(otp: string) {

@@ -12,3 +12,5 @@ export { CreatePoolMemberDto } from './create-pool-member.dto';
 export { UpdatePoolMemberDto } from './update-pool-member.dto';
 export { PoolMemberParamsDto } from './pool-member-params.dto';
 export { PoolMemberQueryDto } from './pool-member-query.dto';
+
+export { FileUploadDto, ExternalUrlUploadDto } from './file-upload.dto';

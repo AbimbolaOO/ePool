@@ -13,15 +13,19 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   // Enable validation globally
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('ePool API Documentation')
-    .setDescription('A comprehensive API for ePool application with authentication, notifications, and pool management features')
+    .setDescription(
+      'A comprehensive API for ePool application with authentication, notifications, and pool management features',
+    )
     .setVersion('1.0')
     .addBearerAuth(
       {
@@ -42,7 +46,8 @@ async function bootstrap() {
   const port = process.env.PORT || 3706;
   await app.listen(port);
   console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger documentation available at: http://localhost:${port}/api`);
-
+  console.log(
+    `📚 Swagger documentation available at: http://localhost:${port}/api`,
+  );
 }
 bootstrap();

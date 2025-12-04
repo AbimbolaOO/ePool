@@ -41,4 +41,3 @@ export interface IUserSignupWelcomeMailFormat {
 export interface AuthenticatedRequest extends Request {
   user: IJwtPayLoadData;
 }
-

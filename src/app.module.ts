@@ -25,16 +25,11 @@ import { RdbModule } from './redisdb/rdb.module';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         ...AppDataSource.options,
-        autoLoadEntities: true
-      })
+        autoLoadEntities: true,
+      }),
     }),
 
-    TypeOrmModule.forFeature([
-      User,
-      PoolMember,
-      PoolFolder,
-      PoolFile,
-    ]),
+    TypeOrmModule.forFeature([User, PoolMember, PoolFolder, PoolFile]),
   ],
   controllers: [],
   providers: [],

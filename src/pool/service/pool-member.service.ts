@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { User } from '../../auth/entity/user.entity';
 import { UserService } from '../../auth/service/user.service';
 import { CreatePoolMemberDto } from '../dto/request/create-pool-member.dto';
 import { PoolMemberQueryDto } from '../dto/request/pool-member-query.dto';
@@ -22,38 +21,32 @@ export class PoolMemberService {
         private userService: UserService,
     ) {}
 
-    async createPoolMember(createPoolMemberDto: CreatePoolMemberDto, requestUserId: string, linkMode: boolean = false) {
+    async createPoolMember(
+        createPoolMemberDto: CreatePoolMemberDto,
+        requestUserId: string,
+        linkMode: boolean = false,
+    ) {
         const { poolFolderId, userId, isOwner } = createPoolMemberDto;
 
-        // Verify that the pool folder exists
         const poolFolder = await this.poolFolderRepository.findOne({
             where: { id: poolFolderId },
-            relations: ['owner',
-                // 'members',
-                // 'members.user'
-            ],
+            relations: ['owner'],
         });
 
         if (!poolFolder) {
             throw new NotFoundException('Pool folder not found');
         }
 
-        // Check if requesting user is owner or member with owner privileges
         const isRequesterOwner = poolFolder.owner.id === requestUserId;
-        // const isRequesterOwnerMember = poolFolder.members.some(
-        //     member => member.user.id === requestUserId && member.isOwner
-        // );
 
-        if (!isRequesterOwner && !linkMode
-            // && !isRequesterOwnerMember
-        ) {
-            throw new BadRequestException('You do not have permission to add members to this pool folder');
+        if (!isRequesterOwner && !linkMode) {
+            throw new BadRequestException(
+                'You do not have permission to add members to this pool folder',
+            );
         }
 
-        // Verify that the user to be added exists
         const userToAdd = await this.userService.getById(userId);
 
-        // Check if user is already a member
         const existingMember = await this.poolMemberRepository.findOne({
             where: {
                 poolFolder: { id: poolFolderId },
@@ -62,10 +55,11 @@ export class PoolMemberService {
         });
 
         if (existingMember) {
-            throw new BadRequestException('User is already a member of this pool folder');
+            throw new BadRequestException(
+                'User is already a member of this pool folder',
+            );
         }
 
-        // Create pool member
         const poolMember = this.poolMemberRepository.create({
             poolFolder: poolFolder,
             user: userToAdd,
@@ -104,8 +98,19 @@ export class PoolMemberService {
         return structurePaginatedData(poolMembers, total, page, limit);
     }
 
+    async getPoolMemberByFolder(poolFolderId: string, userId: string) {
+        const poolMember = await this.poolMemberRepository.findOne({
+            where: { poolFolder: { id: poolFolderId }, user: { id: userId } },
+        });
+
+        if (!poolMember) {
+            throw new NotFoundException('Pool folder not found');
+        }
+
+        return poolMember;
+    }
+
     async getPoolMembersByFolder(poolFolderId: string, userId: string) {
-        // Verify user has access to this pool folder
         const poolFolder = await this.poolFolderRepository.findOne({
             where: { id: poolFolderId },
             relations: ['owner', 'members', 'members.user'],
@@ -116,10 +121,14 @@ export class PoolMemberService {
         }
 
         const isOwner = poolFolder.owner.id === userId;
-        const isMember = poolFolder.members.some(member => member.user.id === userId);
+        const isMember = poolFolder.members.some(
+            (member) => member.user.id === userId,
+        );
 
         if (!isOwner && !isMember) {
-            throw new BadRequestException('You do not have access to this pool folder');
+            throw new BadRequestException(
+                'You do not have access to this pool folder',
+            );
         }
 
         const poolMembers = await this.poolMemberRepository.find({
@@ -141,10 +150,20 @@ export class PoolMemberService {
         return poolMemberships;
     }
 
-    async updatePoolMember(id: string, updatePoolMemberDto: UpdatePoolMemberDto, requestUserId: string) {
+    async updatePoolMember(
+        id: string,
+        updatePoolMemberDto: UpdatePoolMemberDto,
+        requestUserId: string,
+    ) {
         const poolMember = await this.poolMemberRepository.findOne({
             where: { id },
-            relations: ['poolFolder', 'poolFolder.owner', 'poolFolder.members', 'poolFolder.members.user', 'user'],
+            relations: [
+                'poolFolder',
+                'poolFolder.owner',
+                'poolFolder.members',
+                'poolFolder.members.user',
+                'user',
+            ],
         });
 
         if (!poolMember) {
@@ -154,11 +173,13 @@ export class PoolMemberService {
         // Check if requesting user is owner or member with owner privileges
         const isRequesterOwner = poolMember.poolFolder.owner.id === requestUserId;
         const isRequesterOwnerMember = poolMember.poolFolder.members.some(
-            member => member.user.id === requestUserId && member.isOwner
+            (member) => member.user.id === requestUserId && member.isOwner,
         );
 
         if (!isRequesterOwner && !isRequesterOwnerMember) {
-            throw new BadRequestException('You do not have permission to update this pool member');
+            throw new BadRequestException(
+                'You do not have permission to update this pool member',
+            );
         }
 
         Object.assign(poolMember, updatePoolMemberDto);
@@ -168,7 +189,13 @@ export class PoolMemberService {
     async deletePoolMember(id: string, requestUserId: string) {
         const poolMember = await this.poolMemberRepository.findOne({
             where: { id },
-            relations: ['poolFolder', 'poolFolder.owner', 'poolFolder.members', 'poolFolder.members.user', 'user'],
+            relations: [
+                'poolFolder',
+                'poolFolder.owner',
+                'poolFolder.members',
+                'poolFolder.members.user',
+                'user',
+            ],
         });
 
         if (!poolMember) {
@@ -178,12 +205,14 @@ export class PoolMemberService {
         // Check if requesting user is owner or member with owner privileges or the member themselves
         const isRequesterOwner = poolMember.poolFolder.owner.id === requestUserId;
         const isRequesterOwnerMember = poolMember.poolFolder.members.some(
-            member => member.user.id === requestUserId && member.isOwner
+            (member) => member.user.id === requestUserId && member.isOwner,
         );
         const isRequesterTheMember = poolMember.user.id === requestUserId;
 
         if (!isRequesterOwner && !isRequesterOwnerMember && !isRequesterTheMember) {
-            throw new BadRequestException('You do not have permission to remove this pool member');
+            throw new BadRequestException(
+                'You do not have permission to remove this pool member',
+            );
         }
 
         await this.poolMemberRepository.remove(poolMember);

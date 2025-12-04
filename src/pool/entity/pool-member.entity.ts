@@ -1,38 +1,40 @@
 import {
-    Column,
-    CreateDateColumn,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    PrimaryGeneratedColumn,
-    UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 import { User } from '../../auth/entity/user.entity';
 import { PoolFolder } from './pool-folder.entity';
 
-@Entity("pool_member")
+@Entity('pool_member')
 export class PoolMember {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @ManyToOne(() => PoolFolder, poolFolder => poolFolder.members, { onDelete: 'CASCADE' })
-    @JoinColumn()
-    poolFolder: PoolFolder;
+  @ManyToOne(() => PoolFolder, (poolFolder) => poolFolder.members, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  poolFolder: PoolFolder;
 
-    @ManyToOne(() => User, { onDelete: 'CASCADE' })
-    @JoinColumn()
-    user: User;
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn()
+  user: User;
 
-    @Column({ default: false })
-    isOwner: boolean;
+  @Column({ default: false })
+  isOwner: boolean;
 
-    @Column({ default: () => 'NOW()' })
-    invitedAt: Date;
+  @Column({ default: () => 'NOW()' })
+  invitedAt: Date;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

@@ -37,7 +37,12 @@ export class RdbService implements OnModuleInit {
   }
 
   async storeSignUpOtp(emailOrPhone: string, otp: string) {
-    await this.redisClient.set(`signup:otp:${emailOrPhone}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
+    await this.redisClient.set(
+      `signup:otp:${emailOrPhone}`,
+      otp,
+      'EX',
+      CONSTANTS.TTL_10_MIN,
+    );
   }
 
   async getSignUpOtp(emailOrPhone: string): Promise<string | null> {
@@ -49,7 +54,12 @@ export class RdbService implements OnModuleInit {
   }
 
   async storePasswordResetOtp(email: string, otp: string) {
-    await this.redisClient.set(`password-reset:otp:${email}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
+    await this.redisClient.set(
+      `password-reset:otp:${email}`,
+      otp,
+      'EX',
+      CONSTANTS.TTL_10_MIN,
+    );
   }
 
   async getPasswordResetOtp(email: string): Promise<string | null> {
@@ -61,7 +71,12 @@ export class RdbService implements OnModuleInit {
   }
 
   async storeAdminPasswordResetOtp(otp: string, email: string) {
-    await this.redisClient.set(`admin-password-reset:otp:${otp}`, email, 'EX', CONSTANTS.TTL_10_MIN);
+    await this.redisClient.set(
+      `admin-password-reset:otp:${otp}`,
+      email,
+      'EX',
+      CONSTANTS.TTL_10_MIN,
+    );
   }
 
   async getAdminPasswordResetOtp(otp: string): Promise<string | null> {
@@ -69,7 +84,12 @@ export class RdbService implements OnModuleInit {
   }
 
   async storeUserAccountDeleteOtpData(otp: string, data: string) {
-    await this.redisClient.set(`delete-user:otp:${otp}`, data, 'EX', CONSTANTS.TTL_10_MIN);
+    await this.redisClient.set(
+      `delete-user:otp:${otp}`,
+      data,
+      'EX',
+      CONSTANTS.TTL_10_MIN,
+    );
   }
 
   async getUserAccountDeleteOtpData(otp: string): Promise<string | null> {
@@ -77,7 +97,12 @@ export class RdbService implements OnModuleInit {
   }
 
   async storeResetUsernameOtp(userId: string, otp: string) {
-    await this.redisClient.set(`reset-username:otp:${userId}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
+    await this.redisClient.set(
+      `reset-username:otp:${userId}`,
+      otp,
+      'EX',
+      CONSTANTS.TTL_10_MIN,
+    );
   }
 
   async getResetUsernameOtp(userId: string): Promise<string | null> {
@@ -85,7 +110,12 @@ export class RdbService implements OnModuleInit {
   }
 
   async storeEmailSetOtp(userId: string, otp: string) {
-    await this.redisClient.set(`set-email:otp:${userId}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
+    await this.redisClient.set(
+      `set-email:otp:${userId}`,
+      otp,
+      'EX',
+      CONSTANTS.TTL_10_MIN,
+    );
   }
 
   async getEmailSetOtp(userId: string): Promise<string | null> {
@@ -93,7 +123,12 @@ export class RdbService implements OnModuleInit {
   }
 
   async storePhoneSetOtp(userId: string, otp: string) {
-    await this.redisClient.set(`set-phone:otp:${userId}`, otp, 'EX', CONSTANTS.TTL_10_MIN);
+    await this.redisClient.set(
+      `set-phone:otp:${userId}`,
+      otp,
+      'EX',
+      CONSTANTS.TTL_10_MIN,
+    );
   }
 
   async getPhoneSetOtp(userId: string): Promise<string | null> {
@@ -101,7 +136,12 @@ export class RdbService implements OnModuleInit {
   }
 
   async storeTrackWrongPasswordUsage(userId: string, count: number) {
-    await this.redisClient.set(`wrong-password-usage:user-id:${userId}`, count.toString(), 'EX', CONSTANTS.TTL_3_HR);
+    await this.redisClient.set(
+      `wrong-password-usage:user-id:${userId}`,
+      count.toString(),
+      'EX',
+      CONSTANTS.TTL_3_HR,
+    );
   }
 
   async getTrackWrongPasswordUsage(userId: string): Promise<string | null> {
