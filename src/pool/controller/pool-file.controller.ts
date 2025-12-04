@@ -19,19 +19,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiConsumes,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import {
-  FileUploadDto,
-  PoolFileParamsDto,
-  PoolFileQueryDto,
-} from '../dto/request';
+import { FileUploadDto, PoolFileParamsDto, PoolFileQueryDto } from '../dto/request';
 import { PoolFileService } from '../service/pool-file.service';
 
 @ApiTags('Pool File')
@@ -96,23 +86,26 @@ export class PoolFileController {
     };
   }
 
+
   @ApiOperation({
     summary: 'Get User Pool Files',
-    description: 'Get all pool files owned by the authenticated user',
+    description: 'Get all pool files owned by the authenticated user with pagination',
   })
   @ApiBearerAuth('JWT-auth')
   @UseGuards(AuthGuard)
   @Get('user/owned')
   @HttpCode(HttpStatus.OK)
-  async getUserPoolFiles(@Req() request: AuthenticatedRequest) {
+  async getUserPoolFiles(
+    @Req() request: AuthenticatedRequest,
+    @Query() poolFileQueryDto: PoolFileQueryDto,
+  ) {
     const userId = request.user.sub;
-
-    const poolFiles = await this.poolFileService.getUserPoolFiles(userId);
+    const result = await this.poolFileService.getUserPoolFiles(userId, poolFileQueryDto);
 
     return {
       statusCode: HttpStatus.OK,
       message: 'User pool files retrieved successfully',
-      data: poolFiles,
+      data: result,
     };
   }
 
@@ -120,6 +113,8 @@ export class PoolFileController {
     summary: 'Get All Pool Files',
     description: 'Get all pool files with pagination',
   })
+  @ApiBearerAuth('JWT-auth')
+  @UseGuards(AuthGuard)
   @Get()
   @HttpCode(HttpStatus.OK)
   async getAllPoolFiles(@Query() poolFileQueryDto: PoolFileQueryDto) {
@@ -140,7 +135,7 @@ export class PoolFileController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(AuthGuard)
   @Delete(':id')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deletePoolFileAndUpload(
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,
@@ -148,10 +143,6 @@ export class PoolFileController {
     const userId = request.user.sub;
     await this.poolFileService.deletePoolFile(id, userId);
 
-    return {
-      statusCode: HttpStatus.OK,
-      message: 'Pool file and uploaded file deleted successfully',
-      data: null,
-    };
+    return;
   }
 }

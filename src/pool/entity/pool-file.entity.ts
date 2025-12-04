@@ -2,7 +2,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToOne,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -32,9 +33,10 @@ export class PoolFile {
   @Column()
   mimetype: string;
 
-  @OneToOne(() => PoolFolder, (poolFolder) => poolFolder.file, {
+  @ManyToOne(() => PoolFolder, (poolFolder) => poolFolder.files, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn()
   poolFolder: PoolFolder;
 
   @CreateDateColumn()

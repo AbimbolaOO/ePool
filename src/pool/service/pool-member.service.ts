@@ -101,6 +101,7 @@ export class PoolMemberService {
     async getPoolMemberByFolder(poolFolderId: string, userId: string) {
         const poolMember = await this.poolMemberRepository.findOne({
             where: { poolFolder: { id: poolFolderId }, user: { id: userId } },
+            relations: ['poolFolder']
         });
 
         if (!poolMember) {

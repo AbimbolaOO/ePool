@@ -5,7 +5,6 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -28,11 +27,10 @@ export class PoolFolder {
   })
   members: PoolMember[];
 
-  @OneToOne(() => PoolFile, (poolFile) => poolFile.poolFolder, {
+  @OneToMany(() => PoolFile, (poolFile) => poolFile.poolFolder, {
     cascade: true,
   })
-  @JoinColumn()
-  file: PoolFile;
+  files: PoolFile[];
 
   @Column({ length: 64, nullable: true, default: null })
   name: string;

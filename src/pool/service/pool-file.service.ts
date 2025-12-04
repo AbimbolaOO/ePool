@@ -1,16 +1,9 @@
-import {
-  DigitalOceanSpacesService,
-  FileUploadResult,
-} from 'src/digital-ocean-spaces';
+import { DigitalOceanSpacesService, FileUploadResult } from 'src/digital-ocean-spaces';
 import { structurePaginatedData } from 'src/utils/helper/structurePaginatedData';
 import { calculateAspectRatio } from 'src/utils/utils';
 import { Repository } from 'typeorm';
 
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { CreatePoolFileDto } from '../dto/request/create-pool-file.dto';
@@ -32,12 +25,10 @@ export class PoolFileService {
     userId: string,
     file: Express.Multer.File,
   ) {
-    console.log('HERE IN POOL FILE SERVICE...');
     const verifyPoolMember = await this.poolMemberService.getPoolMemberByFolder(
       poolFolderId,
       userId,
     );
-    console.log('DID NOT GET HERE...');
     let uploadResult: FileUploadResult | null = null;
 
     try {
@@ -46,8 +37,7 @@ export class PoolFileService {
         makePublic: true,
       });
 
-      const { aspectRatio, aspectRatioW, aspectRatioH } =
-        await calculateAspectRatio(file);
+      const { aspectRatio, aspectRatioW, aspectRatioH } = await calculateAspectRatio(file);
 
       const createPoolFileDto: CreatePoolFileDto = {
         filename: file.originalname,
@@ -114,43 +104,45 @@ export class PoolFileService {
     return structurePaginatedData(poolFiles, total, page, limit);
   }
 
-  async getUserPoolFiles(userId: string) {
-    const poolFiles = await this.poolFileRepository.find({
+  async getUserPoolFiles(userId: string, poolFileQueryDto: PoolFileQueryDto) {
+    const { perPage: limit, page } = poolFileQueryDto;
+    const offset = page - 1;
+    const skip = offset ? offset * limit : 0;
+
+    const [poolFiles, total] = await this.poolFileRepository.findAndCount({
       where: { poolFolder: { owner: { id: userId } } },
       relations: ['poolFolder', 'poolFolder.owner'],
+      skip,
+      take: limit,
       order: { createdAt: 'DESC' },
     });
 
-    return poolFiles;
+    return structurePaginatedData(poolFiles, total, page, limit);
   }
 
   async deletePoolFile(id: string, userId: string) {
-    try {
-      const poolFile = await this.poolFileRepository.findOne({
-        where: { id },
-        relations: ['poolFolder'],
-      });
+    const poolFile = await this.poolFileRepository.findOne({
+      where: { id },
+      relations: ['poolFolder', 'poolFolder.owner'],
+    });
 
-      if (!poolFile) {
-        throw new NotFoundException('Pool file not found');
-      }
-
-      const isOwner = poolFile.poolFolder.owner.id === userId;
-
-      if (!isOwner) {
-        throw new BadRequestException(
-          'You do not have permission to delete this pool file',
-        );
-      }
-
-      await this.poolFileRepository.remove(poolFile);
-
-      await this.spacesService.deleteFile(poolFile.url, {
-        suppressErrors: true,
-      });
-    } catch (error) {
-      console.warn(`Failed to delete file from storage: ${error.message}`);
+    if (!poolFile) {
+      throw new NotFoundException('Pool file not found');
     }
+
+    const isOwner = poolFile.poolFolder.owner.id === userId;
+
+    if (!isOwner) {
+      throw new BadRequestException(
+        'You do not have permission to delete this pool file',
+      );
+    }
+
+    await this.poolFileRepository.remove(poolFile);
+
+    await this.spacesService.deleteFile(poolFile.url, {
+      suppressErrors: true,
+    });
 
     return { message: 'Pool file deleted successfully' };
   }
